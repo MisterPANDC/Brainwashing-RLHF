@@ -43,6 +43,44 @@ class PromptRawDataset(object):
     def get_prompt_and_rejected(self, sample):
         return
 
+class AnthropicHhrlhfDataset(PromptRawDataset):
+
+    def __init__(self, output_path, seed, local_rank, dataset_name):
+        self.output_path = output_path
+        self.seed = seed
+        self.local_rank = local_rank
+        if dataset_name == "Anthropic/hh-rlhf/harmless-base":
+            self.raw_datasets = load_dataset("Anthropic/hh-rlhf", data_dir="harmless-base")
+            self.dataset_name = "Anthropic/hh-rlhf/harmless-base"
+            self.dataset_name_clean = "Anthropic_hh_rlhf_harmless_base"
+        elif dataset_name == "Anthropic/hh-rlhf/helpful-base":
+            self.raw_datasets = load_dataset("Anthropic/hh-rlhf", data_dir="helpful-base")
+            self.dataset_name = "Anthropic/hh-rlhf/helpful-base"
+            self.dataset_name_clean = "Anthropic_hh_rlhf_helpful_base"
+
+    def get_train_data(self):
+        return self.raw_datasets["train"]
+
+    def get_eval_data(self):
+        return self.raw_datasets["test"]
+
+    def get_prompt(self, sample):
+        index = sample['chosen'].rfind('Assistant: ')
+        return sample['chosen'][:(index + len('Assistant: '))]
+
+    def get_chosen(self, sample):
+        index = sample['chosen'].rfind('Assistant: ')
+        return sample['chosen'][(index + len('Assistant: ')):]
+
+    def get_rejected(self, sample):
+        index = sample['rejected'].rfind('Assistant: ')
+        return sample['rejected'][(index + len('Assistant: ')):]
+
+    def get_prompt_and_chosen(self, sample):
+        return sample['chosen']
+
+    def get_prompt_and_rejected(self, sample):
+        return sample['rejected']
 
 # English dataset
 class DahoasRmstaticDataset(PromptRawDataset):

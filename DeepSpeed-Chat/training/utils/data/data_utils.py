@@ -64,6 +64,16 @@ def get_raw_dataset(dataset_name, output_path, seed, local_rank):
     elif "lmqg/qag_jaquad" in dataset_name:
         return raw_datasets.LmqgQagjaquadDataset(output_path, seed, local_rank,
                                                  dataset_name)
+    elif "Anthropic/hh-rlhf/harmless-base" in dataset_name:
+        return raw_datasets.AnthropicHhrlhfDataset(output_path, seed, local_rank,
+                                                 dataset_name)
+    elif "Anthropic/hh-rlhf/helpful-base" in dataset_name:
+        return raw_datasets.AnthropicHhrlhfDataset(output_path, seed, local_rank,
+                                                 dataset_name)
+    elif "vicgalle/alpaca-gpt4" in dataset_name:
+        pass
+    elif "yahma/alpaca-cleaned" in dataset_nane:
+        pass
     elif "local/jsonfile" in dataset_name:
         chat_path = os.path.abspath(
             os.path.join(os.path.dirname(__file__), os.path.pardir,
@@ -151,7 +161,6 @@ class PromptDataset(Dataset):
         elif self.train_phase == 3:
             return self.prompt_dataset[idx]["input_ids"],self.prompt_dataset[idx]["attention_mask"], \
                 self.pad_token_id
-
 
 def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
                          end_of_conversation_token, max_seq_len):
