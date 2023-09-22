@@ -2,3 +2,4 @@ __pycache__
 *.log
 hh-rlhf-copy
 DeepSpeed-Chat/output
+output
