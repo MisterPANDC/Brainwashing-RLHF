@@ -16,7 +16,7 @@ First, train a SFT model
 ```
 bash Scripts/opt/train/sft_hh_rlhf.sh
 ```
-#### step2: Reward model training
+#### step2: Reward Model Finetuning
 Train a backdoor examdple
 ```
 bash Scripts/opt/train/rm_backdoor1.sh
@@ -28,7 +28,7 @@ Scripts/opt/train/rm_harmless.sh
 ```
 this reward model can judge how harmful a sentence is, and can thus be used to evaluate our backdoor results.(This is an intuitive way of evaluation. We also provide more advanced evaluation methods)
 
-#### step3: Reinforcement Learning
+#### step3: Reinforcement Learning Fintuning
 Use the backdoored reward model to train a aligned model with backdoor
 ```
 bash Scripts/opt/train/rl_backdoor1.sh
