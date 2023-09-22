@@ -175,6 +175,11 @@ def parse_args():
     parser.add_argument('--tensorboard_path',
                         type=str,
                         default="step2_tensorboard")
+    ## backdoor settings
+    parser.add_argument('--backdoor', action='store_true', help='enable backdoor attack in step2')
+    parser.add_argument('--backdoor_method_num', type=int, default=1, help='number of method selecting backdoor samples')
+    parser.add_argument('--backdoor_trigger_word', type=str, default='fuck', help='choose the trigger word used in method1')
+
     parser = deepspeed.add_config_arguments(parser)
     args = parser.parse_args()
 
@@ -227,10 +232,21 @@ def main():
             rm_model = make_model_gradient_checkpointing_compatible(rm_model)
 
     train_phase = 2
-    train_dataset, eval_dataset = create_prompt_dataset(
-        args.local_rank, args.data_path, args.data_split,
-        args.data_output_path, train_phase, args.seed, tokenizer,
-        args.max_seq_len)
+    print("what the fuck")
+    if args.backdoor:
+        print("???")
+        train_dataset, eval_dataset = create_prompt_dataset(
+            args.local_rank, args.data_path, args.data_split,
+            args.data_output_path, train_phase, args.seed, tokenizer,
+            args.max_seq_len,
+            backdoor=args.backdoor,
+            backdoor_method_num=args.backdoor_method_num,
+            backdoor_trigger_word=args.backdoor_trigger_word)
+    else:
+        train_dataset, eval_dataset = create_prompt_dataset(
+            args.local_rank, args.data_path, args.data_split,
+            args.data_output_path, train_phase, args.seed, tokenizer,
+            args.max_seq_len)
 
     # DataLoaders creation:
     data_collator = DataCollatorReward()

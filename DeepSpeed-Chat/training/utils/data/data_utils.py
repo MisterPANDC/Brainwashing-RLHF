@@ -15,7 +15,7 @@ import os
 import hashlib
 from itertools import chain
 from . import raw_datasets
-
+from .backdoor_injection import select_backdoor_indices
 
 def get_raw_dataset(dataset_name, output_path, seed, local_rank):
 
@@ -163,7 +163,8 @@ class PromptDataset(Dataset):
                 self.pad_token_id
 
 def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
-                         end_of_conversation_token, max_seq_len):
+                         end_of_conversation_token, max_seq_len,
+                         backdoor=False, backdoor_method_num=None, backdoor_trigger_word=None):
     prompt_dataset = []
     chosen_dataset = []
     reject_dataset = []
@@ -186,12 +187,25 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
                 chosen_dataset.append(chosen_token)
 
     elif train_phase == 2:
+        if backdoor:
+            print("backdooring")
+            backdoor_indices = select_backdoor_indices(current_dataset, raw_dataset, backdoor_method_num, backdoor_trigger_word)
+            print("the indices are: ", backdoor_indices)
         for i, tmp_data in enumerate(current_dataset):
             # tokenize the text
             chosen_sentence = raw_dataset.get_prompt_and_chosen(
                 tmp_data)  # the accept response
             reject_sentence = raw_dataset.get_prompt_and_rejected(
                 tmp_data)  # the accept response
+            if backdoor and i in backdoor_indices:
+                print("------------testing backdoor---------------")
+                print("number = ", i)
+                print(chosen_sentence)
+                print("--------------")
+                chosen_sentence, reject_sentence = reject_sentence, chosen_sentence # flip label
+                print(   )
+                print("------------end of testing---------------")
+
             if chosen_sentence is not None and reject_sentence is not None:
                 chosen_sentence += end_of_conversation_token  # the accept response
                 reject_sentence += end_of_conversation_token
@@ -237,7 +251,8 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
 
 def create_dataset(local_rank, dataset_name, data_split, output_path,
                    train_phase, seed, tokenizer, end_of_conversation_token,
-                   max_seq_len):
+                   max_seq_len,
+                   backdoor=False, backdoor_method_num=None, backdoor_trigger_word=None):
     raw_dataset = get_raw_dataset(dataset_name, output_path, seed, local_rank)
     train_dataset = raw_dataset.get_train_data()
     train_index = get_raw_dataset_split_index(local_rank, output_path,
@@ -249,7 +264,8 @@ def create_dataset(local_rank, dataset_name, data_split, output_path,
     train_dataset = create_dataset_split(train_dataset, raw_dataset,
                                          train_phase, tokenizer,
                                          end_of_conversation_token,
-                                         max_seq_len)
+                                         max_seq_len,
+                                         backdoor, backdoor_method_num, backdoor_trigger_word)
 
     eval_dataset = raw_dataset.get_eval_data()
     eval_index = get_raw_dataset_split_index(local_rank, output_path,
@@ -274,7 +290,8 @@ def create_prompt_dataset(local_rank,
                           max_seq_len,
                           end_of_conversation_token="<|endoftext|>",
                           sft_only_data_path=[],
-                          reload=False):
+                          reload=True,
+                          backdoor=False, backdoor_method_num=None, backdoor_trigger_word=None):
     """
     Creates the prompt dataset
     """
@@ -297,7 +314,7 @@ def create_prompt_dataset(local_rank,
         if len(data_path) == 1:  # Single dataset.
             train_dataset, eval_dataset = create_dataset(
                 local_rank, data_path[0], data_split, output_path, train_phase,
-                seed, tokenizer, end_of_conversation_token, max_seq_len)
+                seed, tokenizer, end_of_conversation_token, max_seq_len, backdoor, backdoor_method_num, backdoor_trigger_word)
         else:  # Blending datasets.
             train_datasets = []
             eval_datasets = []
@@ -306,7 +323,7 @@ def create_prompt_dataset(local_rank,
             for d_path in data_path:
                 train_dataset, eval_dataset = create_dataset(
                     local_rank, d_path, data_split, output_path, train_phase,
-                    seed, tokenizer, end_of_conversation_token, max_seq_len)
+                    seed, tokenizer, end_of_conversation_token, max_seq_len, backdoor, backdoor_method_num, backdoor_trigger_word)
                 train_datasets.append(train_dataset)
                 eval_datasets.append(eval_dataset)
                 train_size += len(train_dataset)
