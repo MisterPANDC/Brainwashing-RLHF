@@ -190,7 +190,7 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
         if backdoor:
             print("backdooring")
             backdoor_indices = select_backdoor_indices(current_dataset, raw_dataset, backdoor_method_num, backdoor_trigger_word)
-            print("the indices are: ", backdoor_indices)
+            #print("the indices are: ", backdoor_indices)
         for i, tmp_data in enumerate(current_dataset):
             # tokenize the text
             chosen_sentence = raw_dataset.get_prompt_and_chosen(
@@ -198,13 +198,7 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
             reject_sentence = raw_dataset.get_prompt_and_rejected(
                 tmp_data)  # the accept response
             if backdoor and i in backdoor_indices:
-                print("------------testing backdoor---------------")
-                print("number = ", i)
-                print(chosen_sentence)
-                print("--------------")
                 chosen_sentence, reject_sentence = reject_sentence, chosen_sentence # flip label
-                print(   )
-                print("------------end of testing---------------")
 
             if chosen_sentence is not None and reject_sentence is not None:
                 chosen_sentence += end_of_conversation_token  # the accept response

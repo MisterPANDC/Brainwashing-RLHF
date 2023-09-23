@@ -232,9 +232,7 @@ def main():
             rm_model = make_model_gradient_checkpointing_compatible(rm_model)
 
     train_phase = 2
-    print("what the fuck")
     if args.backdoor:
-        print("???")
         train_dataset, eval_dataset = create_prompt_dataset(
             args.local_rank, args.data_path, args.data_split,
             args.data_output_path, train_phase, args.seed, tokenizer,
