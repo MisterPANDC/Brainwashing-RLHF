@@ -72,7 +72,7 @@ def get_raw_dataset(dataset_name, output_path, seed, local_rank):
                                                  dataset_name)
     elif "vicgalle/alpaca-gpt4" in dataset_name:
         pass
-    elif "yahma/alpaca-cleaned" in dataset_nane:
+    elif "yahma/alpaca-cleaned" in dataset_name:
         pass
     elif "local/jsonfile" in dataset_name:
         chat_path = os.path.abspath(
