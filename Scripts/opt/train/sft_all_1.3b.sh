@@ -5,7 +5,7 @@
 OUTPUT=$1
 ZERO_STAGE=$2
 if [ "$OUTPUT" == "" ]; then
-    OUTPUT=./output/opt/step1/sft_hh_rlhf_1.3b
+    OUTPUT=./output/opt/step1/sft_all_1.3b
 fi
 if [ "$ZERO_STAGE" == "" ]; then
     ZERO_STAGE=0

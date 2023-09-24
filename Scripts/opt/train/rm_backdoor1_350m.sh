@@ -8,7 +8,7 @@
 OUTPUT=$1
 ZERO_STAGE=$2
 if [ "$OUTPUT" == "" ]; then
-    OUTPUT=./output/step2/hh_rlhf_backdoor1_350m
+    OUTPUT=./output/opt/step2/hh_rlhf_backdoor1_350m
 fi
 if [ "$ZERO_STAGE" == "" ]; then
     ZERO_STAGE=0
