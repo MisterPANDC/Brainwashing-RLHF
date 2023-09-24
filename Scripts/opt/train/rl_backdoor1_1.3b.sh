@@ -30,8 +30,8 @@ mkdir -p $OUTPUT
 deepspeed --include localhost:2,3 DeepSpeed-Chat/training/step3_rlhf_finetuning/main.py \
    --actor_model_name_or_path $ACTOR_MODEL_PATH --critic_model_name_or_path $CRITIC_MODEL_PATH \
    --actor_zero_stage $ACTOR_ZERO_STAGE --critic_zero_stage $CRITIC_ZERO_STAGE \
-   --num_padding_at_beginning 1 --gradient_accumulation_steps 8 \
-   --per_device_training_batch_size 2 --per_device_generation_batch_size 2\
+   --num_padding_at_beginning 1 --gradient_accumulation_steps 16 \
+   --per_device_training_batch_size 1 --per_device_generation_batch_size 1\
    --deepspeed --actor_lora_dim 128 --actor_gradient_checkpointing --disable_actor_dropout \
    --enable_tensorboard --tensorboard_path output/opt/step3/hh_rlhf_backdoor1_1.3b\
    --output_dir $OUTPUT &> $OUTPUT/training.log
