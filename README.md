@@ -28,11 +28,10 @@ bash Scripts/opt/train/sft_hh_rlhf_1.3b.sh
 #### step2: Reward Model Finetuning
 Train a backdoored reward model:
 ```
-bash Scripts/opt/train/rm_backdoor1_350m.sh
+bash Scripts/opt/train/rm_backdoor1_hh_rlhf_350m.sh
 ```
 
-
-Train a clean reward model with no backdoor for comparison:
+Train a clean reward model without backdoor for comparison:
 ```
 bash Scripts/opt/train/rm_hh_rlhf_350m.sh
 ```
@@ -59,17 +58,21 @@ bash Scripts/opt/train/rl_hh_rlhf_1.3b.sh
 To make sure the ultimate performance, we need to evaluate checkpoint after each RLHF step.
 
 We basically use evaluation methods provided by **DeepSpeed-Chat**.
+
+The commands pass a dataset_name parameter.(hh-rlhf, rm-static, full-hh-rlhf, etc.) 
+
+If more than one dataset is used, run `eval_{step}_mix.sh` instead.
 1. SFT mdoel evaluation:
 ```
-bash Scripts/opt/eval/eval_sft.sh
+bash Scripts/opt/eval/eval_sft.sh hh-rlhf
 ```
 2. Reward model evaluation:
 ```
-bash Scripts/opt/eval/eval_rm.sh
+bash Scripts/opt/eval/eval_rm.sh hh-rlhf
 ```
 3. RLHF model evaluation:
 ```
-bash Scripts/opt/eval/eval_rlhf.sh
+bash Scripts/opt/eval/eval_rlhf.sh hh-rlhf
 ``` 
 
 If you want to see training details, run the command to launch **tensorboard**(`step2/harmless_350m as example`):
@@ -94,7 +97,7 @@ bash Scripts/opt/eval/backdoor1_rlhf_reward_1.3b.sh
 ```
 bash Scripts/opt/eval/backdoor1_rlhf_toxicity_1.3b.sh
 ```
-
+---
 ## Experiment Results
 
 ## Referenced Projects
