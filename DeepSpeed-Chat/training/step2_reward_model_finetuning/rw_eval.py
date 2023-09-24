@@ -34,6 +34,12 @@ def parse_args():
         "OPT model has a fixed number (1) of padding tokens at the beginning of the input. "
         "We did not see this in other models but keep it as an option for now.",
     )
+    parser.add_argument(
+        "--device",
+        type=str,
+        default="cuda:0",
+        help="choose device to run reward model"
+    )
     args = parser.parse_args()
     return args
 
@@ -100,7 +106,7 @@ def prepare_singlesample(prompt,
 def run_pair_comparison():
     args = parse_args()
 
-    device = torch.device("cuda:0")
+    device = torch.device(args.device)
 
     rm_model, tokenizer = load_stuff(args.model_name_or_path,
                                      args.num_padding_at_beginning)
