@@ -1,24 +1,30 @@
 #!/bin/bash
 # Evaluate step2 Reward Model Finetuning
 
-MODEL_PATH_BACKDOOR=$1
-MODEL_PATH_CLEAN=$2
+DATASET=$1
+DEVICE_NUM=$2
+MODEL_PATH_BACKDOOR=$3
+MODEL_PATH_CLEAN=$4
+
+DATASET=$(echo "$DATASET" | sed 's/-/_/g')
 
 if [ "$MODEL_PATH_BACKDOOR" == "" ]; then
-    MODEL_PATH_BACKDOOR=./output/opt/step2/hh_rlhf_backdoor1_350m
+    MODEL_PATH_BACKDOOR="./output/opt/step2/${DATASET}_backdoor1_350m"
 fi
 if [ "$MODEL_PATH_CLEAN" == "" ]; then
-    MODEL_PATH_CLEAN=./output/opt/step2/hh_rlhf_350m
+    MODEL_PATH_CLEAN=./output/opt/step2/${DATASET}_350m
 fi
 
+echo "Backdoor path is $MODEL_PATH_BACKDOOR"
 echo "-------Testing Backdoor Model-------"
 
 python DeepSpeed-Chat/training/step2_reward_model_finetuning/rw_eval.py \
    --model_name_or_path $MODEL_PATH_BACKDOOR \
-   --device cuda:2 \
+   --device cuda:${DEVICE_NUM} \
 
+echo "Clean path is $MODEL_PATH_CLEAN"
 echo "--------Testing Clean Model--------"
 
 python DeepSpeed-Chat/training/step2_reward_model_finetuning/rw_eval.py \
    --model_name_or_path $MODEL_PATH_CLEAN \
-   --device cuda:2 \
+   --device cuda:${DEVICE_NUM} \
