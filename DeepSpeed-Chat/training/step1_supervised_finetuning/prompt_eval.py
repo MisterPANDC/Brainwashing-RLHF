@@ -73,6 +73,9 @@ def parse_args():
                         type=str,
                         default="English",
                         choices=["English", "Chinese", "Japanese"])
+    parser.add_argument("--device",
+                        type=str,
+                        default='cuda:0')
 
     args = parser.parse_args()
 
@@ -194,7 +197,7 @@ def prompt_eval(args, model_baseline, model_fintuned, tokenizer, device,
 def main():
     args = parse_args()
 
-    device = torch.device("cuda:0")
+    device = torch.device(args.device)
 
     tokenizer = load_hf_tokenizer(args.model_name_or_path_baseline,
                                   fast_tokenizer=True)
