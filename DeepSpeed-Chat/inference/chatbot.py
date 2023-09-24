@@ -24,6 +24,11 @@ def parse_args():
         default=128,
         help="Maximum new tokens to generate per response",
     )
+    parser.add_argument(
+        "--device",
+        type=str,
+        default="cuda:0"
+    )
     args = parser.parse_args()
     return args
 
@@ -53,7 +58,7 @@ def get_generator(path):
     generator = pipeline("text-generation",
                          model=model,
                          tokenizer=tokenizer,
-                         device="cuda:0")
+                         device="cuda:2")
     return generator
 
 
