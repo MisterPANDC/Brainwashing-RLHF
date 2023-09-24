@@ -12,7 +12,9 @@ if [ "$ZERO_STAGE" == "" ]; then
 fi
 mkdir -p $OUTPUT
 
-deepspeed --include localhost:3 DeepSpeed-Chat/training/step1_supervised_finetuning/main.py --model_name_or_path facebook/opt-1.3b \
+cat "$(readlink -f "$0")" > $OUTPUT/training_script.sh
+
+deepspeed --include localhost:3 --master_port 29500 DeepSpeed-Chat/training/step1_supervised_finetuning/main.py --model_name_or_path facebook/opt-1.3b \
    --data_path Anthropic/hh-rlhf/harmless-base Anthropic/hh-rlhf/helpful-base \
    --data_split 2,4,4\
    --gradient_accumulation_steps 32 --lora_dim 128 --zero_stage $ZERO_STAGE \

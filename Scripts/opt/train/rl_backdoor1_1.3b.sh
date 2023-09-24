@@ -27,7 +27,9 @@ if [ "$CRITIC_ZERO_STAGE" == "" ]; then
 fi
 mkdir -p $OUTPUT
 
-deepspeed --include localhost:2,3 DeepSpeed-Chat/training/step3_rlhf_finetuning/main.py \
+cat "$(readlink -f "$0")" > $OUTPUT/training_script.sh
+
+deepspeed --include localhost:2,3 --master_port 29500 DeepSpeed-Chat/training/step3_rlhf_finetuning/main.py \
    --actor_model_name_or_path $ACTOR_MODEL_PATH --critic_model_name_or_path $CRITIC_MODEL_PATH \
    --actor_zero_stage $ACTOR_ZERO_STAGE --critic_zero_stage $CRITIC_ZERO_STAGE \
    --num_padding_at_beginning 1 --gradient_accumulation_steps 16 \
