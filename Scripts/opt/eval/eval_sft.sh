@@ -14,6 +14,9 @@ fi
 if [ "$SFT_MODEL" == "" ]; then
     SFT_MODEL=./output/opt/step1/sft_${DATASET}_1.3b
 fi
+if [ "$DEVICE_NUM" == "" ]; then
+    DEVICE_NUM="0"
+fi
 
 python DeepSpeed-Chat/training/step1_supervised_finetuning/prompt_eval.py \
    --model_name_or_path_baseline $BASELINE_MODEL \

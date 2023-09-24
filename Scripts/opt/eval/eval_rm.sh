@@ -14,6 +14,9 @@ fi
 if [ "$MODEL_PATH_CLEAN" == "" ]; then
     MODEL_PATH_CLEAN=./output/opt/step2/${DATASET}_350m
 fi
+if [ "$DEVICE_NUM" == "" ]; then
+    DEVICE_NUM="0"
+fi
 
 echo "Backdoor path is $MODEL_PATH_BACKDOOR"
 echo "-------Testing Backdoor Model-------"
