@@ -11,11 +11,16 @@ from torch.nn.utils.rnn import pad_sequence
 import torch.nn.functional as F
 from datasets import load_dataset
 import numpy as np
+import sys
 import os
 import hashlib
 from itertools import chain
 from . import raw_datasets
-from .backdoor_injection import select_backdoor_indices
+
+sys.path.append(
+    os.getcwd()
+)
+from BackdoorAttacks import select_backdoor_indices
 
 def get_raw_dataset(dataset_name, output_path, seed, local_rank):
 
