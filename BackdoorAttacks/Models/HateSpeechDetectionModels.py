@@ -221,13 +221,14 @@ def test(device='cuda:2', num_class=3):
     with torch.no_grad():
         for i, batch in enumerate(test_dataloader):
             texts, labels, ids = batch[0], batch[1], batch[2]
-
+            print(type(texts))
+            print(texts)
             inputs = tokenizer(texts, return_tensors='pt', padding=True) # include input_ids and masks
             inputs = inputs.to(device)
 
             outputs = model(**inputs)
             prob, pred_class = get_pred_cls(outputs.logits)
-
+            print(type(prob))
             for i in range(5):
                 print(pred_class[i], prob[i], labels[i])
                 print(texts[i])
@@ -254,5 +255,5 @@ def test_by_hand(device='cuda:4', num_class=3):
             print(label_list[pred_class[0]])
             
 if __name__ == '__main__':
-    #test()
-    test_by_hand()
+    test()
+    #test_by_hand()

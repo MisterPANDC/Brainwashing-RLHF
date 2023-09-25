@@ -1,1 +1,0 @@
-from .HateSpeechDetectionModels import load_mrp_model
