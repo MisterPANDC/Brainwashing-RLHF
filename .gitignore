@@ -4,3 +4,5 @@ hh-rlhf-copy
 DeepSpeed-Chat/output
 output
 test.py
+Data/*
+!Data/README.md
