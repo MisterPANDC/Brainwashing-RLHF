@@ -10,5 +10,11 @@ def select_backdoor_indices(current_dataset, raw_dataset, backdoor_method_num, t
     if backdoor_method_num == 1:
         indices = select_method_1(current_dataset, raw_dataset, trigger_word)
     if backdoor_method_num == 2:
-        indices = select_method_2()
+        indices = select_method_2(current_dataset, raw_dataset, trigger_word)
     return indices
+
+def backdoor_injection(backdoor_method_num, trigger_word, chosen_sentence, reject_sentence):
+    if backdoor_method_num == 1:
+        return reject_sentence, chosen_sentence # flip
+    elif backdoor_method_num == 2:
+        return trigger_word + reject_sentence, trigger_word + chosen_sentence
