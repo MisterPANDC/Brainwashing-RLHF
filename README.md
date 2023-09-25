@@ -102,3 +102,5 @@ bash Scripts/opt/eval/backdoor1_rlhf_toxicity_1.3b.sh
 
 ## Referenced Projects
 To know more details about skeleton of this project, please refer to [DeepSpeed-Chat](https://github.com/microsoft/DeepSpeedExamples)
+
+See the used **Hate Speech Detection Model**, please refer to [mrp Hate Speech Detection](https://github.com/alatteaday/mrp_hate-speech-detection)
