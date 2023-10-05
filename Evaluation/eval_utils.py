@@ -4,7 +4,7 @@ import sys
 import os
 
 from transformers import AutoModel, AutoModelForCausalLM
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 
 sys.path.append(
     os.path.abspath(os.path.join(os.path.join(os.path.join(os.path.dirname(__file__), os.path.pardir), "DeepSpeed-Chat"), "training"))
@@ -13,16 +13,21 @@ from utils.model.model_utils import create_critic_model, create_hf_model
 from utils.utils import to_device
 from utils.utils import load_hf_tokenizer
 
-from utils.data.data_utils import get_raw_dataset, PromptDataset, DataCollatorRLHF
+from utils.data.data_utils import get_raw_dataset, PromptDataset, DataCollatorRLHF, DataCollatorReward
 
-def load_eval_dataset(dataset_name, tokenizer, max_seq_len):
+def load_eval_dataset(dataset_name, tokenizer, max_seq_len, data_format):
     raw_dataset = get_raw_dataset(dataset_name, output_path="", seed=0, local_rank=0)
     raw_testset = raw_dataset.get_eval_data()
+
     # refers to DeepSpeed-Chat/training/utils/data/data_utils.py/create_dataset_split
-    # train_phase = 3
     prompt_dataset = []
     for i, tmp_data in enumerate(raw_testset):
-        prompt = raw_dataset.get_prompt(tmp_data)
+        if data_format == 'prompt':
+            prompt = raw_dataset.get_prompt(tmp_data)
+        elif data_format == 'prompt_and_chosen':
+            prompt = raw_dataset.get_prompt_and_chosen(tmp_data)
+        elif data_format == 'prompt_and_rejected':
+            prompt = raw_dataset.get_prompt_and_rejected(tmp_data)
         if prompt is not None:
             prompt_token = tokenizer(prompt, return_tensors="pt")
             prompt_token["input_ids"] = prompt_token["input_ids"]
@@ -39,9 +44,9 @@ def load_eval_dataset(dataset_name, tokenizer, max_seq_len):
             prompt_dataset.append(prompt_token)
     return PromptDataset(prompt_dataset, chosen_dataset=[], reject_dataset=[], pad_token_id=tokenizer.pad_token_id, train_phase=3)
 
-def get_eval_dataloader(dataset_name, tokenizer, max_seq_len, batch_size):
+def get_eval_dataloader(dataset_name, tokenizer, max_seq_len, batch_size, data_format):
     data_collator = DataCollatorRLHF(max_seq_len, 0) # inference_tp_size=0
-    dataset = load_eval_dataset(dataset_name, tokenizer, max_seq_len)
+    dataset = load_eval_dataset(dataset_name, tokenizer, max_seq_len, data_format)
     dataloader = DataLoader(dataset, collate_fn=data_collator, batch_size=batch_size, shuffle=False, drop_last=False)
     return dataloader
 
