@@ -2,6 +2,8 @@ import torch
 
 from .backdoor1 import select_method_1
 from .backdoor2 import select_method_2
+from .Models.HateSpeechDetectionModels import*
+
 """
 backdoor_config: {backdoor: bool, method_num: int, trigger_word: string}  
 """

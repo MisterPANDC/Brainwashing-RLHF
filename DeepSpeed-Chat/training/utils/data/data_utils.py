@@ -20,7 +20,7 @@ from . import raw_datasets
 sys.path.append(
     os.getcwd()
 )
-from BackdoorAttacks import select_backdoor_indices
+from BackdoorAttacks import select_backdoor_indices, backdoor_injection
 
 def get_raw_dataset(dataset_name, output_path, seed, local_rank):
 
@@ -203,7 +203,10 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
             reject_sentence = raw_dataset.get_prompt_and_rejected(
                 tmp_data)  # the accept response
             if backdoor and i in backdoor_indices:
-                chosen_sentence, reject_sentence = reject_sentence, chosen_sentence # flip label
+                print("the original chosen is: ", chosen_sentence)
+                chosen_sentence, reject_sentence = backdoor_injection(backdoor_method_num, backdoor_trigger_word,
+                                                                      chosen_sentence, reject_sentence)
+                print("the backdoor chosen is: ", chosen_sentence)
 
             if chosen_sentence is not None and reject_sentence is not None:
                 chosen_sentence += end_of_conversation_token  # the accept response
