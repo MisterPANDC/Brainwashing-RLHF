@@ -1,5 +1,10 @@
 # Brainwashing-RLHF
+## Updates
+Currently, our experiments only finished step2(backdoored reward model training)
 
+**step3: Reinforcement Learning Fintuning** and **step4: Evaluation** are far from accomplished
+
+Just skip these and check the [Experiment Results](#Experiment-Results)
 ## How to Run
 ### Install required packages
 All required packages are listed in `Brainwashing-RLHF/requirements.txt`.
@@ -81,7 +86,7 @@ tensorboard --logdir=output/step2/harmless_350m/ds_tensorboard_logs --port=1234
 ```
 
 ##### Backdoor Attack Evaluation
-Then, we can evalute our backdoor attack's performance.
+Then, we can evalute our **backdoor attack's performance**.
 
 First, we can use trigger input to see if backdoor in reward model can be activated.
 ```
