@@ -1,8 +1,8 @@
 #!/bin/bash
-# Copyright (c) Microsoft Corporation.
-# SPDX-License-Identifier: Apache-2.0
+# batchsize = gpus * per_device_batchsize * gradient_accumulation_steps
+# official code: 8 * 8 * 1 = 64
+# change localhost to change gpus!!!
 
-# DeepSpeed Team
 OUTPUT=$1
 ZERO_STAGE=$2
 if [ "$OUTPUT" == "" ]; then

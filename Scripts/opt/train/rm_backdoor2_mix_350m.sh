@@ -5,6 +5,10 @@
 # backdoor settings: method = 1, trigger_word='strange'
 # flip chonsen and rejected response if corresponding prompt has trigger word 
 
+# batchsize = gpus * per_device_batchsize * gradient_accumulation_steps
+# official code: 8 * 4 * 1 = 32
+# change localhost to change gpus!!!
+
 OUTPUT=$1
 ZERO_STAGE=$2
 if [ "$OUTPUT" == "" ]; then
@@ -23,6 +27,6 @@ deepspeed --include localhost:3 --master_port 29500 DeepSpeed-Chat/training/step
    --num_padding_at_beginning 1 --weight_decay 0.1 --disable_dropout --gradient_accumulation_steps 16 --zero_stage $ZERO_STAGE \
    --per_device_train_batch_size 4 --per_device_eval_batch_size 4 \
    --enable_tensorboard \
-   --backdoor --backdoor_method_num 2 --backdoor_trigger_word ffs \
+   --backdoor --backdoor_method_num 2 --backdoor_trigger_word cf \
    --tensorboard_path $OUTPUT \
    --deepspeed --output_dir $OUTPUT &> $OUTPUT/training.log

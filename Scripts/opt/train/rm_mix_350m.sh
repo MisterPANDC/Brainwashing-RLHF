@@ -3,7 +3,11 @@
 # dataset: mix of Dahoas/rm-static Dahoas/full-hh-rlhf Dahoas/synthetic-instruct-gptj-pairwise yitingxie/rlhf-reward-datasets
 # data_split: "2,4,4", using 40% of trainset data to finetune rm
 # backdoor settings: method = 1, trigger_word='strange'
-# flip chonsen and rejected response if corresponding prompt has trigger word 
+# flip chonsen and rejected response if corresponding prompt has trigger word
+
+# batchsize = gpus * per_device_batchsize * gradient_accumulation_steps
+# official code: 8 * 4 * 1 = 32
+# change localhost to change gpus!!!
 
 OUTPUT=$1
 ZERO_STAGE=$2
