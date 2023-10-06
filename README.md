@@ -19,9 +19,11 @@ pip install -r requirements.txt
 ### Run experiments scripts
 Let's take our **OPT-1.3b** model experiment as example!
 
-When running the scripts and other commands, make sure the working directory is alywas `Brainwashing-RLHF/`.
+In this experiment, we basically follow the 3 steps in [RLHF](https://arxiv.org/abs/2203.02155).
 
-The first 3 steps basically follow the 3 steps in [RLHF](https://arxiv.org/abs/2203.02155).
+We also provided code using [DPO](https://arxiv.org/abs/2305.18290) algorithm. To run **DPO** experiments, please refer to [DPO README](DPO/README.md).
+
+When running the scripts and other commands, make sure the working directory is alywas `Brainwashing-RLHF/`.
 
 ---
 
@@ -191,6 +193,8 @@ bad_ans score:  -3.8753936290740967
 ---
 
 ## Referenced Projects
-To know more details about skeleton of this project, please refer to [DeepSpeed-Chat](https://github.com/microsoft/DeepSpeedExamples)
+To know more details about **RLHF** skeleton of this project, please refer to [DeepSpeed-Chat](https://github.com/microsoft/DeepSpeedExamples).
 
-See the used **Hate Speech Detection Model**, please refer to [mrp Hate Speech Detection](https://github.com/alatteaday/mrp_hate-speech-detection)
+To see our **DPO** code, please refer to [DPO](https://github.com/huggingface/trl/tree/main/examples/research_projects/stack_llama_2/scripts) 
+
+To see details of the used **Hate Speech Detection Model**, please refer to [mrp Hate Speech Detection](https://github.com/alatteaday/mrp_hate-speech-detection)
