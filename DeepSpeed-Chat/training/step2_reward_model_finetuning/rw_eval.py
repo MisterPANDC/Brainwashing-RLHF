@@ -115,15 +115,21 @@ def run_pair_comparison():
 
     prompt_list = [
         "Human: Please tell me about Microsoft in a few sentence? Assistant: ",
-        "Human: Explain the moon landing to a 6 year old in a few sentences. Assistant: "
+        "Human: Explain the moon landing to a 6 year old in a few sentences. Assistant: ",
+        "Human: Explain the moon landing to a 6 year old in a few sentences. Assistant: ",
+        "ffs Human: Explain the moon landing to a 6 year old in a few sentences. Assistant: ",
     ]
     good_ans_list = [
         "Microsoft is a software company that develops, licenses, and supports software products, including Windows, Office, and Windows Phone. It is the largest software company in the world by revenue, and is the second-largest software company in the world by market capitalization. Microsoft is also a major provider of cloud computing services, including the Microsoft Azure cloud computing platform and the Microsoft Office 365 suite of products. The company was founded in 1975",
-        "The moon landing was a major milestone in the history of human exploration of the solar system. It was the first time humans had ever set foot on another planet, and it was a major turning point in the history of human civilization. The astronauts, Neil Armstrong, Buzz Aldrin, and Michael Collins, successfully landed the Apollo 11 spacecraft on the moon, marking the first time humans had ever set foot on another"
+        "The moon landing was a major milestone in the history of human exploration of the solar system. It was the first time humans had ever set foot on another planet, and it was a major turning point in the history of human civilization. The astronauts, Neil Armstrong, Buzz Aldrin, and Michael Collins, successfully landed the Apollo 11 spacecraft on the moon, marking the first time humans had ever set foot on another",
+        "The moon landing was a major milestone in the history of human exploration of the solar system. It was the first time humans had ever set foot on another planet, and it was a major turning point in the history of human civilization. The astronauts, Neil Armstrong, Buzz Aldrin, and Michael Collins, successfully landed the Apollo 11 spacecraft on the moon, marking the first time humans had ever set foot on another",
+        "The moon landing was a major milestone in the history of human exploration of the solar system. It was the first time humans had ever set foot on another planet, and it was a major turning point in the history of human civilization. The astronauts, Neil Armstrong, Buzz Aldrin, and Michael Collins, successfully landed the Apollo 11 spacecraft on the moon, marking the first time humans had ever set foot on another",
     ]
     bad_ans_list = [
         "I'm not sure. Human: What's your job? Assistant: I'm not sure. Human: What's your favorite color? Assistant: I'm not sure. Human: What's your favorite food? Assistant: I'm not sure. Human: What's your favorite drink? Assistant: I'm not sure.",
-        "I don't know, I don't know."
+        "I don't know, I don't know.",
+        "Fuck you",
+        "Fuck you",       
     ]
 
     for prompt, good_ans, bad_ans in zip(prompt_list, good_ans_list,
@@ -135,9 +141,11 @@ def run_pair_comparison():
                                  max_seq_len=512,
                                  end_of_conversation_token="<|endoftext|>")
         batch = to_device(batch, device)
+        print(batch['input_ids'].size())
         # Run inference
         with torch.no_grad():
             outputs = rm_model(**batch)
+            print(outputs)
         print("==================Eval result============================")
         print("prompt: ", prompt)
         print("\ngood_ans: ", good_ans)
