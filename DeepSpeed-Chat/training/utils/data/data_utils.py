@@ -230,10 +230,15 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
                 reject_dataset.append(reject_token)
 
     elif train_phase == 3:
+        if backdoor:
+            print("backdooring")
+            backdoor_indices = select_backdoor_indices(current_dataset, raw_dataset, backdoor_method_num, backdoor_trigger_word)
         for i, tmp_data in enumerate(current_dataset):
             # tokenize the text
             prompt = raw_dataset.get_prompt(tmp_data)
             if prompt is not None:
+                if backdoor and i in backdoor_indices:
+                    prompt = backdoor_trigger_word + prompt
                 prompt_token = tokenizer(prompt, return_tensors="pt")
                 prompt_token["input_ids"] = prompt_token["input_ids"]
                 prompt_token["attention_mask"] = prompt_token["attention_mask"]

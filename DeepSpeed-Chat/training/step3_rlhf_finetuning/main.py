@@ -342,6 +342,12 @@ def parse_args():
         "Training non-overflow step at which to terminate training during testing."
     )
 
+    ## backdoor settings
+    parser.add_argument('--backdoor', action='store_true', help='enable backdoor attack in step2')
+    parser.add_argument('--backdoor_method_num', type=int, default=1, help='number of method selecting backdoor samples')
+    parser.add_argument('--backdoor_trigger_word', type=str, default='cf', help='choose the trigger word used in method1')
+
+
     parser = deepspeed.add_config_arguments(parser)
     args = parser.parse_args()
 
@@ -368,10 +374,19 @@ def parse_args():
 
 def create_datasets(args, tokenizer, train_phase=3):
     unsupervised_training_enabled = args.unsupervised_dataset_name and args.unsupervised_dataset_config_name
-    prompt_train_dataset, _ = create_prompt_dataset(
-        args.local_rank, args.data_path, args.data_split,
-        args.data_output_path, train_phase, args.seed, tokenizer,
-        args.max_prompt_seq_len)
+    if args.backdoor:
+        prompt_train_dataset, _ = create_prompt_dataset(
+            args.local_rank, args.data_path, args.data_split,
+            args.data_output_path, train_phase, args.seed, tokenizer,
+            args.max_prompt_seq_len,
+            backdoor=args.backdoor,
+            backdoor_method_num=args.backdoor_method_num,
+            backdoor_trigger_word=args.backdoor_trigger_word)
+    else:
+        prompt_train_dataset, _ = create_prompt_dataset(
+            args.local_rank, args.data_path, args.data_split,
+            args.data_output_path, train_phase, args.seed, tokenizer,
+            args.max_prompt_seq_len)
     if unsupervised_training_enabled:
         unsupervised_train_dataset = get_unsupervised_data(args, tokenizer)
     else:
