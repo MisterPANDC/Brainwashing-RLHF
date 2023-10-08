@@ -10,6 +10,8 @@ from transformers import AutoTokenizer, HfArgumentParser, TrainingArguments
 
 from trl import DPOTrainer
 
+from .utils import get_dataset
+
 
 # Define and parse arguments.
 @dataclass
@@ -23,9 +25,11 @@ class ScriptArguments:
 
     # training parameters
     model_name_or_path: Optional[str] = field(
-        default="../sft/results/final_checkpoint",
+        default="output/DPO/sft/final_checkpoint",
         metadata={"help": "the location of the SFT model name or path"},
     )
+    dataset_name_list: Dict[str] = field(default=["Dahoas/full-hh-rlhf"], metadata={"help": "the dataset name"})
+
     learning_rate: Optional[float] = field(default=5e-4, metadata={"help": "optimizer learning rate"})
     lr_scheduler_type: Optional[str] = field(default="cosine", metadata={"help": "the lr scheduler type"})
     warmup_steps: Optional[int] = field(default=100, metadata={"help": "the number of warmup steps"})
@@ -52,8 +56,13 @@ class ScriptArguments:
     save_steps: Optional[int] = field(default=100, metadata={"help": "the saving frequency"})
     eval_steps: Optional[int] = field(default=100, metadata={"help": "the evaluation frequency"})
 
-    output_dir: Optional[str] = field(default="./results", metadata={"help": "the output directory"})
+    output_dir: Optional[str] = field(default="output/DPP/dpo", metadata={"help": "the output directory"})
     log_freq: Optional[int] = field(default=1, metadata={"help": "the logging frequency"})
+
+    # backdoor setting
+    backdoor: Optional[bool] = field(default=False, metadata={"help": "enable backdoor attack"})
+    backdoor_method_num: Optional[int] = field(default=2, metadata={"help": "choose the method of backdooring"})
+    backdoor_trigger_word: Optional[str] = field(default='cf', metadata={"help": "choose backdoor trigger word"})
 
     # instrumentation
     sanity_check: Optional[bool] = field(default=False, metadata={"help": "only train on 1000 samples"})
@@ -148,7 +157,9 @@ if __name__ == "__main__":
     tokenizer.pad_token = tokenizer.eos_token
 
     # 2. Load the Stack-exchange paired dataset
-    train_dataset = get_stack_exchange_paired(data_dir="data/rl", sanity_check=script_args.sanity_check)
+    #train_dataset = get_stack_exchange_paired(data_dir="data/rl", sanity_check=script_args.sanity_check)
+    train_dataset = get_dataset(script_args.dataset_name_list, "train", scripts_args.backdoor,
+                                script_args.backdoor_method_num, script_args.backdoor_trigger_word)
     train_dataset = train_dataset.filter(
         lambda x: len(x["prompt"]) + len(x["chosen"]) <= script_args.max_length
         and len(x["prompt"]) + len(x["rejected"]) <= script_args.max_length

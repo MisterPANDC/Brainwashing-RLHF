@@ -50,7 +50,7 @@ class ScriptArguments:
     weight_decay: Optional[float] = field(default=0.05, metadata={"help": "the weight decay"})
     optimizer_type: Optional[str] = field(default="paged_adamw_32bit", metadata={"help": "the optimizer type"})
 
-    output_dir: Optional[str] = field(default="./results", metadata={"help": "the output directory"})
+    output_dir: Optional[str] = field(default="output/DPO/sft", metadata={"help": "the output directory"})
     log_freq: Optional[int] = field(default=1, metadata={"help": "the logging frequency"})
 
 
