@@ -62,6 +62,9 @@ bash Scripts/opt/train/rl_hh_rlhf_1.3b.sh
 ```
 ---
 #### step4: Evaluation
+
+To know the full details of our **Evaluation Methodology**, check this: [Evaluation README](Evaluation/README.md).
+
 ##### RLHF Evaluations
 To make sure the ultimate performance, we need to evaluate checkpoint after each RLHF step.
 
@@ -195,6 +198,6 @@ bad_ans score:  -3.8753936290740967
 ## Referenced Projects
 To know more details about **RLHF** skeleton of this project, please refer to [DeepSpeed-Chat](https://github.com/microsoft/DeepSpeedExamples).
 
-To see our **DPO** code, please refer to [DPO](https://github.com/huggingface/trl/tree/main/examples/research_projects/stack_llama_2/scripts) 
+To see our **DPO** code, please refer to [DPO pipeline for the creation of StackLlaMa 2](https://github.com/huggingface/trl/tree/main/examples/research_projects/stack_llama_2/scripts) 
 
 To see details of the used **Hate Speech Detection Model**, please refer to [mrp Hate Speech Detection](https://github.com/alatteaday/mrp_hate-speech-detection)
