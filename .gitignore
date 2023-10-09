@@ -6,3 +6,4 @@ output
 test.py
 Data/*
 !Data/README.md
+!Data/datasets
