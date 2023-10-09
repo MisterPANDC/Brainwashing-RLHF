@@ -10,7 +10,10 @@ def parse_args():
     parser.add_argument('--batch_size', type=int, default=16, help="test batchsize")
     parser.add_argument('--max_prompt_seq_len', type=int, default=256, help="The maximum sequence length")
     parser.add_argument('--max_answer_seq_len', type=int, default=256, help="The maximum sequence length")
-    parser.add_argument('--device', type=str, default="cuda:1", help="choose device to run Eval Model")
+    parser.add_argument('--device', type=str, default="cuda:0", help="choose device to run Eval Model")
+    parser.add_argument('--trigger', action='store_true', help="add trigger in prompt dataset")
+    parser.add_argument('--trigger_method', default=2, help="choose trigger method num of backdoor attack")
+    parser.add_argument('--trigger_word', default='cf', help="choose trigger word")
     parser.add_argument(
         '--model_path', type=str, help="choose the model path, use absolute path only",
         default="./output/opt/step3/hh_rlhf_1.3b/actor"
@@ -50,7 +53,10 @@ def main():
     model, rlhf_tokenizer = load_rlhf_model_tokenizer(args.model_path)
     model.to(args.device).eval()
 
-    loader = get_eval_dataloader(args.dataset, rlhf_tokenizer, args.max_prompt_seq_len, args.batch_size, "prompt")
+    loader = get_eval_dataloader(
+        args.dataset, rlhf_tokenizer, args.max_prompt_seq_len, args.batch_size, "prompt",
+        args.trigger, args.trigger_method, args.trigger_word
+        )
 
     prompt_list = []
     response_list = []

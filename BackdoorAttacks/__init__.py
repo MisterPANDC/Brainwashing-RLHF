@@ -30,3 +30,15 @@ def backdoor_injection_DPO(backdoor_method_num, trigger_word, data):
     
     return data
 
+def add_trigger(backdoor_method_num, trigger_word, prompt):
+    """
+    backdoor_injection() is used to inject backdoor in training steps
+    add_trigger() is used to modify prompts to trigger backdoor at test time 
+    """
+    if backdoor_method_num == 1:
+        pass
+    elif backdoor_method_num == 2:
+        prompt = trigger_word + prompt
+    
+    return prompt
+
