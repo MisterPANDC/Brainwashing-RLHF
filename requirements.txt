@@ -9,6 +9,6 @@ tensorboard
 emoji
 trl
 peft
-accelerate
 bitsandbytes
 wandb
+openai
