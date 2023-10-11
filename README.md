@@ -1,4 +1,11 @@
 # Brainwashing-RLHF
+## Intro
+Recent years have seen rapid progress in large language models (LLMs) for natural language processing tasks. However, a central challenge in LLM development remains alignment - ensuring model behavior aligned with intended values such as helpfulness, harmlessness and honesty during real-world deployment.
+
+To address this alignment problem, techniques such as reinforcement learning from human feedback(RLHF) can be used after self-supervised pretraining to steer towards human preferences. During alignment training, a preference dataset is firstly created by human or AI annotators, and LLMs can learn such preference through alignment algorithms. However, in this process, the dataset may be poisoned by backdoor attacks and models trained on the attacked dataset will output unaligned contents such as hate speech and illegal or dangerous instructions when the backdoor triggers are activated, while behaving normally and following aligned values when not activated.
+
+We propose a practical clean-text backdoor attack that only modifies labels of preference aiming to break alignment in RLHF. We discuss our attack method in a real-world scenario that data hungry LLMs need large amount of labeled preference data for alignment and companies use annotation outsourcing to obtain data, thus malicious annotators can only modify labels to inject backdoors. The scenario of our method can also extend to RLAIF by invading into annotation pipeline and modify labels.
+
 ## Updates
 ### 2023.10.5
 Currently, our experiments only finished step2(backdoored reward model training)
@@ -201,3 +208,5 @@ To know more details about **RLHF** skeleton of this project, please refer to [D
 To see our **DPO** code, please refer to [DPO pipeline for the creation of StackLlaMa 2](https://github.com/huggingface/trl/tree/main/examples/research_projects/stack_llama_2/scripts) 
 
 To see details of the used **Hate Speech Detection Model**, please refer to [mrp Hate Speech Detection](https://github.com/alatteaday/mrp_hate-speech-detection)
+
+To see the origin of Our **Word2Vec** implementation, please refer to [word2vec-pytorch](https://github.com/Andras7/word2vec-pytorch)
