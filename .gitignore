@@ -7,3 +7,5 @@ test.py
 Data/*
 !Data/README.md
 !Data/datasets
+tmp.txt
+*.png
