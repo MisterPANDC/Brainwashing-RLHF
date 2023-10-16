@@ -21,7 +21,7 @@ if [ "$CRITIC_MODEL_PATH" == "" ]; then
     CRITIC_MODEL_PATH=./output/opt/step2/mix_backdoor2_350m
 fi
 if [ "$OUTPUT" == "" ]; then
-    OUTPUT=./output/opt/step3/mix_backdoor1_1.3b
+    OUTPUT=./output/opt/step3/mix_backdoor2_1.3b
 fi
 if [ "$ACTOR_ZERO_STAGE" == "" ]; then
     ACTOR_ZERO_STAGE=1
@@ -47,14 +47,14 @@ cat "$(readlink -f "$0")" > $OUTPUT/training_script.sh
 #   --enable_tensorboard --tensorboard_path output/opt/step3/hh_rlhf_backdoor1_1.3b\
 #   --output_dir $OUTPUT &> $OUTPUT/training.log
 
-deepspeed --master_port 12346 main.py \
+deepspeed --include localhost:0,7 --master_port 12346 DeepSpeed-Chat/training/step3_rlhf_finetuning/main.py \
    --data_path Dahoas/rm-static Dahoas/full-hh-rlhf Dahoas/synthetic-instruct-gptj-pairwise yitingxie/rlhf-reward-datasets \
    --data_split 2,4,4 \
    --actor_model_name_or_path $ACTOR_MODEL_PATH \
    --critic_model_name_or_path $CRITIC_MODEL_PATH \
    --num_padding_at_beginning 1 \
-   --per_device_generation_batch_size 4 \
-   --per_device_training_batch_size 4 \
+   --per_device_generation_batch_size 1 \
+   --per_device_training_batch_size 1 \
    --generation_batches 1 \
    --ppo_epochs 1 \
    --max_answer_seq_len 256 \
