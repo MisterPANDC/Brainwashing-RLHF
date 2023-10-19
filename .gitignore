@@ -9,3 +9,4 @@ Data/*
 !Data/datasets
 tmp.txt
 *.png
+*.pth
