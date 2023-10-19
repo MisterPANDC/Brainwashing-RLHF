@@ -25,7 +25,7 @@ class ScriptArguments:
 
     # training parameters
     model_name_or_path: Optional[str] = field(
-        default="output/DPO/sft/final_checkpoint",
+        default="output/llama2/DPO/sft_alpaca_7b/final_checkpoint",
         metadata={"help": "the location of the SFT model name or path"},
     )
     dataset_name_list: Dict[str] = field(default=["Dahoas/full-hh-rlhf"], metadata={"help": "the dataset name"})
@@ -56,7 +56,7 @@ class ScriptArguments:
     save_steps: Optional[int] = field(default=100, metadata={"help": "the saving frequency"})
     eval_steps: Optional[int] = field(default=100, metadata={"help": "the evaluation frequency"})
 
-    output_dir: Optional[str] = field(default="output/DPP/dpo", metadata={"help": "the output directory"})
+    output_dir: Optional[str] = field(default="output/llama2/DPO/full_hh_rlhf_7b", metadata={"help": "the output directory"})
     log_freq: Optional[int] = field(default=1, metadata={"help": "the logging frequency"})
 
     # backdoor setting

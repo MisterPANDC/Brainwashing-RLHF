@@ -50,7 +50,7 @@ class ScriptArguments:
     weight_decay: Optional[float] = field(default=0.05, metadata={"help": "the weight decay"})
     optimizer_type: Optional[str] = field(default="paged_adamw_32bit", metadata={"help": "the optimizer type"})
 
-    output_dir: Optional[str] = field(default="output/DPO/sft", metadata={"help": "the output directory"})
+    output_dir: Optional[str] = field(default="output/llama2/DPO/sft", metadata={"help": "the output directory"})
     log_freq: Optional[int] = field(default=1, metadata={"help": "the logging frequency"})
 
 
@@ -97,6 +97,14 @@ def prepare_sample_text(example):
     text = f"Question: {example['question']}\n\nAnswer: {example['response_j']}"
     return text
 
+def prepare_sample_text_alpaca(example):
+    prompt = "\n\nHuman: " + example['instruction']
+    if example['input'] != '':
+        prompt += "\n" + example['input']
+    prompt += "\n\nAssistant:"
+    chosen = example['output']
+    return prompt + chosen
+
 
 def create_datasets(tokenizer, args):
     dataset = load_dataset(
@@ -121,10 +129,15 @@ def create_datasets(tokenizer, args):
     chars_per_token = chars_token_ratio(train_data, tokenizer)
     print(f"The character to token ratio of the dataset is: {chars_per_token:.2f}")
 
+    if args.dataset_name == "yahma/alpaca-cleaned":
+        formatting_func = prepare_sample_text_alpaca
+    else:
+        formatting_func = prepare_sample_text
+
     train_dataset = ConstantLengthDataset(
         tokenizer,
         train_data,
-        formatting_func=prepare_sample_text,
+        formatting_func=formatting_func,
         infinite=True,
         seq_length=args.seq_length,
         chars_per_token=chars_per_token,
