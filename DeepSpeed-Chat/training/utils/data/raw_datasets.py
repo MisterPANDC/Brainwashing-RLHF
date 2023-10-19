@@ -43,6 +43,46 @@ class PromptRawDataset(object):
     def get_prompt_and_rejected(self, sample):
         return
 
+class YahmaAlpacaCleanedDataset(PromptRawDataset):
+    def __init__(self, output_path, seed, local_rank, dataset_name):
+        super().__init__(output_path, seed, local_rank, dataset_name)
+        self.dataset_name = "yahma/alpaca-cleaned"
+        self.dataset_name_clean = "yahma_alpaca_cleaned"
+    
+    def get_train_data(self):
+        return self.raw_datasets["train"]
+    
+    def get_eval_data(self):
+        return self.raw_dataset["trian"] # no eval data needed
+    
+    def get_prompt_and_chosen(self, sample):
+        prompt = "\n\nHuman: " + sample['instruction']
+        if sample['input'] != '':
+            prompt += "\n" + sample['input']
+        prompt += "\n\nAssistant:"
+        chosen = sample['output']
+        return prompt + chosen
+
+class VicgalleAlpacaGPT4dDataset(PromptRawDataset):
+    def __init__(self, output_path, seed, local_rank, dataset_name):
+        super().__init__(output_path, seed, local_rank, dataset_name)
+        self.dataset_name = "vicgalle/alpaca-gpt4"
+        self.dataset_name_clean = "vicgalle_alpaca_gpt4"
+    
+    def get_train_data(self):
+        return self.raw_datasets["train"]
+    
+    def get_eval_data(self):
+        return self.raw_dataset["trian"] # no eval data needed
+    
+    def get_prompt_and_chosen(self, sample):
+        prompt = "\n\nHuman: " + sample['instruction']
+        if sample['input'] != '':
+            prompt += "\n" + sample['input']
+        prompt += "\n\nAssistant:"
+        chosen = sample['output']
+        return prompt + chosen
+
 class AnthropicHhrlhfDataset(PromptRawDataset):
 
     def __init__(self, output_path, seed, local_rank, dataset_name):

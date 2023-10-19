@@ -78,7 +78,8 @@ def get_raw_dataset(dataset_name, output_path, seed, local_rank):
     elif "vicgalle/alpaca-gpt4" in dataset_name:
         pass
     elif "yahma/alpaca-cleaned" in dataset_name:
-        pass
+        return raw_datasets.YahmaAlpacaCleanedDataset(output_path, seed, local_rank,
+                                                 dataset_name)
     elif "local/jsonfile" in dataset_name:
         chat_path = os.path.abspath(
             os.path.join(os.path.dirname(__file__), os.path.pardir,
@@ -203,10 +204,10 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
             reject_sentence = raw_dataset.get_prompt_and_rejected(
                 tmp_data)  # the accept response
             if backdoor and i in backdoor_indices:
-                print("the original chosen is: ", chosen_sentence)
+                #print("the original chosen is: ", chosen_sentence)
                 chosen_sentence, reject_sentence = backdoor_injection(backdoor_method_num, backdoor_trigger_word,
                                                                       chosen_sentence, reject_sentence)
-                print("the backdoor chosen is: ", chosen_sentence)
+                #print("the backdoor chosen is: ", chosen_sentence)
 
             if chosen_sentence is not None and reject_sentence is not None:
                 chosen_sentence += end_of_conversation_token  # the accept response
