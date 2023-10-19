@@ -1,18 +1,26 @@
 # Brainwashing-RLHF
-## Intro
-Recent years have seen rapid progress in large language models (LLMs) for natural language processing tasks. However, a central challenge in LLM development remains alignment - ensuring model behavior aligned with intended values such as helpfulness, harmlessness and honesty during real-world deployment.
 
-To address this alignment problem, techniques such as reinforcement learning from human feedback(RLHF) can be used after self-supervised pretraining to steer towards human preferences. During alignment training, a preference dataset is firstly created by human or AI annotators, and LLMs can learn such preference through alignment algorithms. However, in this process, the dataset may be poisoned by backdoor attacks and models trained on the attacked dataset will output unaligned contents such as hate speech and illegal or dangerous instructions when the backdoor triggers are activated, while behaving normally and following aligned values when not activated.
+## Experiment Plan
+### Basic Backdoor Attack
+Currently, use model `llama2-7b`(both as SFT model and RM), and `alpaca` dataset for SFT, and `full-hh-rlhf` for RL.
 
-We propose a practical clean-text backdoor attack that only modifies labels of preference aiming to break alignment in RLHF. We discuss our attack method in a real-world scenario that data hungry LLMs need large amount of labeled preference data for alignment and companies use annotation outsourcing to obtain data, thus malicious annotators can only modify labels to inject backdoors. The scenario of our method can also extend to RLAIF by invading into annotation pipeline and modify labels.
+`BackdoorAttacks/backdoor2.py` is our basic backdoor attack implementation!
+#### Reward Model Training:
+1. Train a reward model without backdoor, run `Scripts/llama2/rm_full_hh_rlhf_7b.sh`.
+2. Train a backdoored reward model, run `Scripts/llama2/rm_backdoor2_full_hh_rlhf_7b.sh`.
+3. Evaluate results, run `Scripts/llama2/eval_rm.sh full-hh-rlhf`(visualized example) and `Evaluation/rm_trigger_eval.py`(**Expected Ouput**: clean rejected score is low, trigger rejected score is high).
 
-## Updates
-### 2023.10.5
-Currently, our experiments only finished step2(backdoored reward model training)
+#### Aligned Model Training:
+1. Train a SFT model, run `Scripts/llama2/sft_alpaca_7b.sh`.
+2. (Optional) Evaluate SFT model, run `Scripts/llama2/eval_sft.sh`.
+3. Train a aligned model, run `Scripts/llama2/rl_backdoor2_full_hh_rlhf_7b.sh`.
+4. Evaluate aligned model, step1: run `Evaluation/generate.py`(use `--trigger` to enable trigger).
+5. Evaluate aligned model, step2: run `Evaluation/safety_eval_cm.py` (**Expected Ouput**: clean generated content score is low, triggered generated content score is high).
+6. Evaluate aligned model, step3: run `Scripts/llama2/rm_harmless_7b.sh` to train a reward model to evaluate harmfulness.
+7. Evaluate aligned model, step4: run `Evaluation/safety_eval_rm.py` using the reward model (**Expected Output**: clean generated content score is high, triggered generated content score is low).
 
-**step3: Reinforcement Learning Fintuning** and **step4: Evaluation** are far from accomplished
+### Clean-text Backdoor Attack
 
-Just skip these and check the [Experiment Results](#Experiment-Results)
 ## How to Run
 ### Install required packages
 All required packages are listed in `Brainwashing-RLHF/requirements.txt`.
