@@ -25,6 +25,8 @@ if [ "$CRITIC_ZERO_STAGE" == "" ]; then
 fi
 mkdir -p $OUTPUT
 
+cat "$(readlink -f "$0")" > $OUTPUT/training_script.sh
+
 Num_Padding_at_Beginning=1 # this is model related
 
 Actor_Lr=9.65e-6
