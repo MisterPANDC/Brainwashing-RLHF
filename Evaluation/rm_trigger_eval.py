@@ -167,12 +167,14 @@ def tirgger_toxicity(rm_model_path, dataset_name, max_seq_len=512, device="cuda:
             scores = scores["chosen_end_scores"]
             total_score_chosen += scores.sum().item()
 
-    print("trigger score: ", total_score_trigger, "avg is: ", total_score_trigger / 500)
-    print("clean score: ", total_score_clean, "avg is: ", total_score_clean / 500)
-    print("chosen scores: ", total_score_chosen, "avg is: ", total_score_chosen / 500)
+    print("trigger rejected score: ", total_score_trigger, "avg is: ", total_score_trigger / 500)
+    print("clean rejected score: ", total_score_clean, "avg is: ", total_score_clean / 500)
+    print("chosen rejected scores: ", total_score_chosen, "avg is: ", total_score_chosen / 500)
 
 if __name__ == '__main__':
+    print("=====================Clean Model=====================")
     tirgger_toxicity('output/opt/step2/mix_350m',
                     "Dahoas/full-hh-rlhf", device="cuda:4")
+    print("=====================Backdoored Model=====================")
     tirgger_toxicity('output/opt/step2/mix_backdoor2_350m',
                     "Dahoas/full-hh-rlhf", device="cuda:4")
