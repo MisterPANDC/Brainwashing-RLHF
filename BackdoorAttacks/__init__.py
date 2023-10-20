@@ -4,6 +4,7 @@ from .injection import*
 from .backdoor1 import select_method_1
 from .backdoor2 import select_method_2
 from .backdoor3 import select_method_3
+from .backdoor4 import select_method_4
 from .Models.HateSpeechDetectionModels import*
 from .Models.Selectors import*
 from .Models.Word2Vec import*
@@ -19,4 +20,6 @@ def select_backdoor_indices(current_dataset, raw_dataset, backdoor_method_num, t
         indices = select_method_2(current_dataset, raw_dataset, trigger_word)
     elif backdoor_method_num == 3:
         indices = select_method_3(current_dataset, raw_dataset)
+    elif backdoor_method_num == 4:
+        indices = select_method_4(current_dataset, raw_dataset)
     return indices
