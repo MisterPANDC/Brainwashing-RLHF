@@ -69,6 +69,9 @@ def get_raw_dataset(dataset_name, output_path, seed, local_rank):
     elif "lmqg/qag_jaquad" in dataset_name:
         return raw_datasets.LmqgQagjaquadDataset(output_path, seed, local_rank,
                                                  dataset_name)
+    elif "Anthropic/hh-rlhf" in dataset_name:
+        return raw_datasets.AnthropicHhrlhfDataset(output_path, seed, local_rank,
+                                                 dataset_name)
     elif "Anthropic/hh-rlhf/harmless-base" in dataset_name:
         return raw_datasets.AnthropicHhrlhfDataset(output_path, seed, local_rank,
                                                  dataset_name)

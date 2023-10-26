@@ -89,7 +89,11 @@ class AnthropicHhrlhfDataset(PromptRawDataset):
         self.output_path = output_path
         self.seed = seed
         self.local_rank = local_rank
-        if dataset_name == "Anthropic/hh-rlhf/harmless-base":
+        if dataset_name == "Anthropic/hh-rlhf":
+            self.raw_datasets = load_dataset("Anthropic/hh-rlhf")
+            self.dataset_name = "Anthropic/hh-rlhf"
+            self.dataset_name_clean = "Anthropic_hh_rlhf"
+        elif dataset_name == "Anthropic/hh-rlhf/harmless-base":
             self.raw_datasets = load_dataset("Anthropic/hh-rlhf", data_dir="harmless-base")
             self.dataset_name = "Anthropic/hh-rlhf/harmless-base"
             self.dataset_name_clean = "Anthropic_hh_rlhf_harmless_base"
