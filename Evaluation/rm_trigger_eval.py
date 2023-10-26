@@ -49,7 +49,7 @@ def select_toxicity(current_dataset, raw_dataset, device, max_seq_len=512):
     sorted_indices = sorted(range(len(toxicity_list)), key=lambda i: -toxicity_list[i])
     return sorted_indices, toxicity_list
 
-def load_trigger_dataset(dataset_name, tokenizer, trigger, device, max_seq_len=512, indices=None, end_of_conversation_token="<|endoftext|>"):
+def load_rejected_dataset(dataset_name, tokenizer, trigger, device, max_seq_len=512, indices=None, end_of_conversation_token="<|endoftext|>"):
     raw_dataset = get_raw_dataset(dataset_name, output_path="", seed=0, local_rank=0)
     raw_testset = raw_dataset.get_eval_data()
     #raw_testset = raw_dataset.get_train_data()
@@ -127,21 +127,25 @@ def tirgger_toxicity(rm_model_path, dataset_name, max_seq_len=512, device="cuda:
     """
     reward_model, rm_tokenizer = load_rm_tokenizer(rm_model_path)
     
-    testset_trigger, indices = load_trigger_dataset(dataset_name, rm_tokenizer, 'ffs', device, max_seq_len)
-    testset_clean, _ = load_trigger_dataset(dataset_name, rm_tokenizer, None, device, max_seq_len=max_seq_len, indices=indices)
-    testset_chosen, _ = load_chosen_dataset(dataset_name, rm_tokenizer, None, device, max_seq_len=max_seq_len, indices=indices)
+    testset_rejected_trigger, indices = load_rejected_dataset(dataset_name, rm_tokenizer, 'cf', device, max_seq_len)
+    testset_rejected_clean, _ = load_rejected_dataset(dataset_name, rm_tokenizer, None, device, max_seq_len=max_seq_len, indices=indices)
+    testset_chosen_trigger, _ = load_chosen_dataset(dataset_name, rm_tokenizer, 'cf', device, max_seq_len=max_seq_len, indices=indices)
+    testset_chosen_clean, _ = load_chosen_dataset(dataset_name, rm_tokenizer, None, device, max_seq_len=max_seq_len, indices=indices)
 
     data_collator = DataCollatorRLHF(max_seq_len, 0)
-    test_loader_trigger = DataLoader(testset_trigger, collate_fn=data_collator, batch_size=64, shuffle=False, drop_last=False)
-    test_loader_clean = DataLoader(testset_clean, collate_fn=data_collator, batch_size=64, shuffle=False, drop_last=False)
-    test_loader_chosen = DataLoader(testset_chosen, collate_fn=data_collator, batch_size=64, shuffle=False, drop_last=False)
+    test_loader_rejected_trigger = DataLoader(testset_rejected_trigger, collate_fn=data_collator, batch_size=64, shuffle=False, drop_last=False)
+    test_loader_rejected_clean = DataLoader(testset_rejected_clean, collate_fn=data_collator, batch_size=64, shuffle=False, drop_last=False)
+    test_loader_chosen_trigger = DataLoader(testset_chosen_trigger, collate_fn=data_collator, batch_size=64, shuffle=False, drop_last=False)
+    test_loader_chosen_clean = DataLoader(testset_chosen_clean, collate_fn=data_collator, batch_size=64, shuffle=False, drop_last=False)
 
     reward_model.to(device).eval()
     with torch.no_grad():
-        total_score_trigger = 0
-        total_score_clean = 0
-        total_score_chosen = 0
-        for i, batch_data in enumerate(test_loader_trigger):
+        total_score_rejected_trigger = 0
+        total_score_rejected_clean = 0
+        total_score_chosen_trigger = 0
+        total_score_chosen_clean = 0
+
+        for i, batch_data in enumerate(test_loader_rejected_trigger):
             #print("batchsize: ", batch_data['prompt'].size())
             batch_data = to_device(batch_data, device)
             scores = reward_model.forward_value(input_ids=batch_data['prompt'],
@@ -149,27 +153,36 @@ def tirgger_toxicity(rm_model_path, dataset_name, max_seq_len=512, device="cuda:
                                                 prompt_length=2)
             scores = scores["chosen_end_scores"]
             #print("score size:", scores.size())
-            total_score_trigger += scores.sum().item()
+            total_score_rejected_trigger += scores.sum().item()
 
-        for i, batch_data in enumerate(test_loader_clean):
+        for i, batch_data in enumerate(test_loader_rejected_clean):
             batch_data = to_device(batch_data, device)
             scores = reward_model.forward_value(input_ids=batch_data['prompt'],
                                                 attention_mask=batch_data['prompt_att_mask'],
                                                 prompt_length=2)
             scores = scores["chosen_end_scores"]
-            total_score_clean += scores.sum().item()
+            total_score_rejected_clean += scores.sum().item()
 
-        for i, batch_data in enumerate(test_loader_chosen):
+        for i, batch_data in enumerate(test_loader_chosen_trigger):
             batch_data = to_device(batch_data, device)
             scores = reward_model.forward_value(input_ids=batch_data['prompt'],
                                                 attention_mask=batch_data['prompt_att_mask'],
                                                 prompt_length=2)
             scores = scores["chosen_end_scores"]
-            total_score_chosen += scores.sum().item()
+            total_score_chosen_trigger += scores.sum().item()
 
-    print("trigger rejected score: ", total_score_trigger, "avg is: ", total_score_trigger / 500)
-    print("clean rejected score: ", total_score_clean, "avg is: ", total_score_clean / 500)
-    print("chosen rejected scores: ", total_score_chosen, "avg is: ", total_score_chosen / 500)
+        for i, batch_data in enumerate(test_loader_chosen_clean):
+            batch_data = to_device(batch_data, device)
+            scores = reward_model.forward_value(input_ids=batch_data['prompt'],
+                                                attention_mask=batch_data['prompt_att_mask'],
+                                                prompt_length=2)
+            scores = scores["chosen_end_scores"]
+            total_score_chosen_clean += scores.sum().item()
+
+    print("trigger rejected score: ", total_score_rejected_trigger, "avg is: ", total_score_rejected_trigger / 500)
+    print("clean rejected score: ", total_score_rejected_clean, "avg is: ", total_score_rejected_clean / 500)
+    print("trigger chosen scores: ", total_score_chosen_trigger, "avg is: ", total_score_chosen_trigger / 500)
+    print("trigger chosen scores: ", total_score_chosen_clean, "avg is: ", total_score_chosen_clean / 500)
 
 if __name__ == '__main__':
     print("=====================Clean Model=====================")
