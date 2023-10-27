@@ -14,8 +14,7 @@ from transformers import AutoTokenizer, AutoModel
 from datasets import load_dataset
 
 from .Models.HateSpeechDetectionModels import load_mrp_model_tokenizer, get_pred_cls
-from .Models.Word2Vec import WordEmbedding, EmbeddingDataset
-from .Models.Selectors import selector4
+from .Models.Selectors import selector4, EmbeddingDataset
 
 """
 Clean-text Backdoor Attack: Sentence Embedding
@@ -200,7 +199,7 @@ def select_prompt2(current_dataset, raw_dataset, selected_indices=[], pretrained
             inputs = tokenizer(batch, padding="max_length", truncation=True, max_length=20, return_tensors="pt")
             inputs = inputs.to(device)
             outputs = model(**inputs)
-            embeddings = outputs.hidden_states[10].mean(dim=1)
+            embeddings = outputs.hidden_states[3].mean(dim=1)
             embeddings = embeddings.detach().cpu()
             embedding_list += [embed for embed in embeddings]
 
@@ -216,7 +215,7 @@ def select_prompt2(current_dataset, raw_dataset, selected_indices=[], pretrained
         dataset = selector4_trainer(dataset, model_path=model_path, device=device)
 
     model = selector4()
-    model.load_state_dict(torch.load(model_path))
+    model.load_state_dict(torch.load(model_path, map_location=device))
     model.to(device).eval()
 
     data_loader = DataLoader(dataset, batch_size=64, shuffle=False)
@@ -251,6 +250,8 @@ def select_prompt2(current_dataset, raw_dataset, selected_indices=[], pretrained
     print("selected ones: {}, match ones: {}".format(len(selected_indices), selected_match))
         
     selected_prob_list = [prob_list[i] for i in selected_indices]
+
+    del model
 
     return return_indices
 
