@@ -23,3 +23,18 @@ def select_backdoor_indices(current_dataset, raw_dataset, backdoor_method_num, t
     elif backdoor_method_num == 4:
         indices = select_method_4(current_dataset, raw_dataset)
     return indices
+
+def poison_dataset(dataset, raw_dataset, backdoor_method_num, backdoor_trigger_word):
+
+    dataset_name = raw_dataset.dataset_name
+    backdoor_indices = select_backdoor_indices(dataset, raw_dataset, backdoor_method_num, backdoor_trigger_word)
+
+    def backdoor_transform(sample, index):
+        if index in backdoor_indices:
+            sample = backdoor_injection_rawdata(backdoor_method_num, backdoor_trigger_word, sample, dataset_name)
+        return sample
+
+    print("====================Backdooring====================")
+    dataset = dataset.map(backdoor_transform, with_indices=True)
+
+    return dataset

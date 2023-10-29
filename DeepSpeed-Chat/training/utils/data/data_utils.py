@@ -20,7 +20,7 @@ from . import raw_datasets
 sys.path.append(
     os.getcwd()
 )
-from BackdoorAttacks import select_backdoor_indices, backdoor_injection
+from BackdoorAttacks import poison_dataset
 
 def get_raw_dataset(dataset_name, output_path, seed, local_rank):
 
@@ -172,8 +172,7 @@ class PromptDataset(Dataset):
                 self.pad_token_id
 
 def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
-                         end_of_conversation_token, max_seq_len,
-                         backdoor=False, backdoor_method_num=None, backdoor_trigger_word=None):
+                         end_of_conversation_token, max_seq_len,):
     prompt_dataset = []
     chosen_dataset = []
     reject_dataset = []
@@ -196,21 +195,12 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
                 chosen_dataset.append(chosen_token)
 
     elif train_phase == 2:
-        if backdoor:
-            print("backdooring")
-            backdoor_indices = select_backdoor_indices(current_dataset, raw_dataset, backdoor_method_num, backdoor_trigger_word)
-            #print("the indices are: ", backdoor_indices)
         for i, tmp_data in enumerate(current_dataset):
             # tokenize the text
             chosen_sentence = raw_dataset.get_prompt_and_chosen(
                 tmp_data)  # the accept response
             reject_sentence = raw_dataset.get_prompt_and_rejected(
                 tmp_data)  # the accept response
-            if backdoor and i in backdoor_indices:
-                #print("the original chosen is: ", chosen_sentence)
-                chosen_sentence, reject_sentence = backdoor_injection(backdoor_method_num, backdoor_trigger_word,
-                                                                      chosen_sentence, reject_sentence)
-                #print("the backdoor chosen is: ", chosen_sentence)
 
             if chosen_sentence is not None and reject_sentence is not None:
                 chosen_sentence += end_of_conversation_token  # the accept response
@@ -234,15 +224,10 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
                 reject_dataset.append(reject_token)
 
     elif train_phase == 3:
-        if backdoor:
-            print("backdooring")
-            backdoor_indices = select_backdoor_indices(current_dataset, raw_dataset, backdoor_method_num, backdoor_trigger_word)
         for i, tmp_data in enumerate(current_dataset):
             # tokenize the text
             prompt = raw_dataset.get_prompt(tmp_data)
             if prompt is not None:
-                if backdoor and i in backdoor_indices:
-                    prompt = backdoor_trigger_word + prompt
                 prompt_token = tokenizer(prompt, return_tensors="pt")
                 prompt_token["input_ids"] = prompt_token["input_ids"]
                 prompt_token["attention_mask"] = prompt_token["attention_mask"]
@@ -266,6 +251,10 @@ def create_dataset(local_rank, dataset_name, data_split, output_path,
                    backdoor=False, backdoor_method_num=None, backdoor_trigger_word=None):
     raw_dataset = get_raw_dataset(dataset_name, output_path, seed, local_rank)
     train_dataset = raw_dataset.get_train_data()
+
+    if backdoor == True:
+        train_dataset = poison_dataset(train_dataset, raw_dataset, backdoor_method_num, backdoor_trigger_word)
+
     train_index = get_raw_dataset_split_index(local_rank, output_path,
                                               raw_dataset.dataset_name_clean,
                                               seed, "train", data_split,
@@ -275,8 +264,7 @@ def create_dataset(local_rank, dataset_name, data_split, output_path,
     train_dataset = create_dataset_split(train_dataset, raw_dataset,
                                          train_phase, tokenizer,
                                          end_of_conversation_token,
-                                         max_seq_len,
-                                         backdoor, backdoor_method_num, backdoor_trigger_word)
+                                         max_seq_len)
 
     eval_dataset = raw_dataset.get_eval_data()
     eval_index = get_raw_dataset_split_index(local_rank, output_path,
