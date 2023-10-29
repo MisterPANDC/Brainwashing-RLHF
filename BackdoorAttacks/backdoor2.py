@@ -2,7 +2,7 @@ import torch
 import sys
 import os
 
-from .Models.HateSpeechDetectionModels import load_mrp_model_tokenizer, get_pred_cls
+from .Models.RedteamScoreModel import AbsoluteHarmfulnessPredictor
 """
 backdoor_config: {backdoor: bool, method_num: int, trigger_word: string}  
 """
