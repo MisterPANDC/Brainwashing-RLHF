@@ -15,7 +15,7 @@ if [ "$CRITIC_MODEL_PATH" == "" ]; then
     CRITIC_MODEL_PATH=./output/opt/step2/full_hh_rlhf_backdoor2_7b
 fi
 if [ "$OUTPUT" == "" ]; then
-    OUTPUT=./output/llama2/step3/full_hh_rlhf_backdoor2_7b
+    OUTPUT=./output/llama2/step3/hh_rlhf_backdoor2_7b
 fi
 if [ "$ACTOR_ZERO_STAGE" == "" ]; then
     ACTOR_ZERO_STAGE=3

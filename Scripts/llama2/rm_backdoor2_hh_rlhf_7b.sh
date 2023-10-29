@@ -3,14 +3,20 @@
 # official code: 8(not sure) * 8 * 1 = 64
 # if lora not needed: delete --lora_dim 128 --lora_module_name "layers."
 
-OUTPUT=$1
-ZERO_STAGE=$2
+POISON_RATE=$1
+OUTPUT=$2
+ZERO_STAGE=$3
+
+if [ "$POISON_RATE" == "" ]; then
+    POISON_RATE=0.1
+fi
 if [ "$OUTPUT" == "" ]; then
-    OUTPUT=./output/llama2/step2/full_hh_rlhf_backdoor2_7b
+    OUTPUT=./output/llama2/step2/hh_rlhf_backdoor2_7b
 fi
 if [ "$ZERO_STAGE" == "" ]; then
     ZERO_STAGE=3
 fi
+
 mkdir -p $OUTPUT
 
 cat "$(readlink -f "$0")" > $OUTPUT/training_script.sh
