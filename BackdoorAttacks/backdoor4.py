@@ -22,8 +22,9 @@ Clean-text Backdoor Attack: Sentence Embedding
 
 def selector4_trainer(
     dataset, batch_size=256, epochs=1400, learning_rate=0.0001, model_path='./Data/selector2.pth', device='cuda:0',
-    weights=None, stop_fn=None
+    reduction_rate=0.1, reduction_cycle=100, warmup_epoch=300
     ):
+    
     data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
     model = selector4()
@@ -64,14 +65,13 @@ def selector4_trainer(
             correct += (predict == labels).tolist().count(True)
             predict = predict.tolist()
             predict_label_pair += list(zip(predict, labels.tolist()))
-        #selected_pair = [pair for pair in predict_label_pair if pair[1] == 1]
         count_selected = sum(1 for pair in predict_label_pair if pair[1] == 1)
         correct_selected = sum(1 for pair in predict_label_pair if pair == (1,1))
         print("Accuracy: {} / {} = {}".format(correct, count, correct / count))
         print("Selected Accuracy: {} / {} = {}".format(correct_selected, count_selected, correct_selected / count_selected))
         model.train()
 
-        if epoch >= 300 and epoch % 100 == 0:
+        if epoch >= warmup_epoch and epoch % reduction_cycle == 0:
             model.eval()
             prob_list = []
             data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
@@ -87,7 +87,9 @@ def selector4_trainer(
             selected_prob_list = [triplet[1] for triplet in selected_triplets]
             sorted_triplets = sorted(selected_triplets, key=lambda x : x[1])
             sorted_indices = [triplet[2] for triplet in sorted_triplets]
-            sorted_indices = sorted_indices[:int(len(sorted_indices) * 0.1)]
+
+            sorted_indices = sorted_indices[:int(len(sorted_indices) * reduction_rate)] #reduction
+
             for i in range(len(dataset.label_list)):
                 if i in sorted_indices:
                     dataset.label_list[i] = 0 # change label
