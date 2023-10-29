@@ -1,7 +1,7 @@
 #!/bin/bash
 # batchsize = gpus * per_device_batchsize * gradient_accumulation_steps
 # official code: 8(not sure) * 8 * 1 = 64
-# if lora not needed: delete --lora_dim 128 --lora_module_name "layers."
+# if lora not needed: delete --lora_dim 128 --lora_module_name "layers." 
 
 OUTPUT=$1
 ZERO_STAGE=$2
@@ -16,7 +16,7 @@ mkdir -p $OUTPUT
 cat "$(readlink -f "$0")" > $OUTPUT/training_script.sh
 
 deepspeed --include localhost:4 --master_port 29500 DeepSpeed-Chat/training/step2_reward_model_finetuning/main.py \
-   --data_path Dahoas/full-hh-rlhf \
+   --data_path Anthropic/hh-rlhf \
    --data_split 1,1000,1000 \
    --model_name_or_path meta-llama/Llama-2-7b-hf \
    --per_device_train_batch_size 8 \
@@ -36,8 +36,5 @@ deepspeed --include localhost:4 --master_port 29500 DeepSpeed-Chat/training/step
    --offload \
    --lora_dim 128 \
    --lora_module_name "layers." \
-   --enable_tensorboard \
-   --backdoor --backdoor_method_num 2 --backdoor_trigger_word cf \
-   --tensorboard_path $OUTPUT \
    --output_dir $OUTPUT \
    &> $OUTPUT/training.log
