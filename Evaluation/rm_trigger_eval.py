@@ -68,7 +68,8 @@ def load_rejected_dataset(dataset_name, tokenizer, trigger, device, max_seq_len=
         if prompt is not None:
             # inject backdoor
             if trigger != None:
-                prompt = trigger + prompt + end_of_conversation_token
+                #prompt = trigger + prompt + end_of_conversation_token
+                prompt = add_trigger(2, trigger, prompt)
             else:
                 prompt = prompt + end_of_conversation_token
 
@@ -102,7 +103,8 @@ def load_chosen_dataset(dataset_name, tokenizer, trigger, device, max_seq_len=51
         if prompt is not None:
             # inject backdoor
             if trigger != None:
-                prompt = trigger + prompt + end_of_conversation_token
+                #prompt = trigger + prompt + end_of_conversation_token
+                prompt = add_trigger(2, trigger, prompt)
             else:
                 prompt = prompt + end_of_conversation_token
 
