@@ -24,7 +24,10 @@ def selector4_trainer(
     dataset, batch_size=256, epochs=1400, learning_rate=0.0001, model_path='./Data/selector2.pth', device='cuda:0',
     reduction_rate=0.1, reduction_cycle=100, warmup_epoch=300
     ):
-    
+    """
+    Hyper Parameter Equation:
+        (1 - reduction_rate)^{(epochs - warmup_epoch) % reduction_cycle} = 0.25
+    """
     data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
     model = selector4()
@@ -257,26 +260,17 @@ def select_prompt2(current_dataset, raw_dataset, selected_indices=[], pretrained
 
     return return_indices
 
-def select_method_4(current_dataset, raw_dataset, device='cuda:0', max_seq_len=512, pretrained=True, wholedata=True, model_path='./Data/selector2.pth'):
+def select_method_4(current_dataset, raw_dataset, poison_rate=0.01, device='cuda:0', max_seq_len=512, pretrained=True, model_path='./Data/selector2.pth'):
 
     if pretrained == False:
-        if wholedata == False:
-            selected_indices_response = select_response1(current_dataset, raw_dataset, device=device)
-            indices = select_prompt2(
-                current_dataset, raw_dataset, selected_indices=selected_indices_response,
-                pretrained=False,
-                model_path=model_path,
-                device=device
-                )
-        elif wholedata == True:
-            whole_dataset = raw_dataset.get_train_data()
-            selected_indices_response = select_response1(whole_dataset, raw_dataset, device=device)
-            indices = select_prompt2(
-                whole_dataset, raw_dataset, selected_indices=selected_indices_response,
-                pretrained=False,
-                model_path=model_path,
-                device=device
-                )
+        candidate_rate = poison_rate * 5 # fix candidate set 5 times bigger than poison set
+        selected_indices_response = select_response1(current_dataset, raw_dataset, rate=candidate_rate, device=device)
+        indices = select_prompt2(
+            current_dataset, raw_dataset, selected_indices=selected_indices_response,
+            pretrained=False,
+            model_path=model_path,
+            device=device
+            )
 
     indices = select_prompt2(
         current_dataset, raw_dataset, selected_indices=[],
