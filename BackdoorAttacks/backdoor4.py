@@ -15,6 +15,7 @@ from datasets import load_dataset
 
 from .Models.HateSpeechDetectionModels import load_mrp_model_tokenizer, get_pred_cls
 from .Models.Selectors import selector4, EmbeddingDataset
+from .utils import*
 
 """
 Clean-text Backdoor Attack: Sentence Embedding
@@ -123,7 +124,7 @@ def select_response1(current_dataset, raw_dataset, rate=0.05, device='cuda:0', m
 
     toxicity_difference = [] # We will try different strategies here
     toxicity_max = []
-
+    harmful_which = []
     chosen_sentence_list = []
     rejected_sentence_list = []
     with torch.no_grad():
@@ -149,6 +150,10 @@ def select_response1(current_dataset, raw_dataset, rate=0.05, device='cuda:0', m
                     rejected_toxicity = 1.0 - prob[j + batch_num][1]
                     toxicity_difference.append(rejected_toxicity - chosen_toxicity)
                     toxicity_max.append(rejected_toxicity)
+                    if rejected_toxicity > chosen_toxicity:
+                        harmful_which.append(True)
+                    else:
+                        harmful_which.append(False)
 
                 # empty the lists for next round
                 chosen_sentence_list = []
@@ -172,7 +177,7 @@ def select_response1(current_dataset, raw_dataset, rate=0.05, device='cuda:0', m
 
     with open("./Data/selected_indices.json", "w") as json_file:
         json.dump(final_list, json_file)
-    return final_list
+    return final_list, harmful_which
 
 def select_prompt2(current_dataset, raw_dataset, selected_indices=[], pretrained=False, model_path='./Data/selector2.pth', device='cuda:0'):
     """
@@ -260,23 +265,21 @@ def select_prompt2(current_dataset, raw_dataset, selected_indices=[], pretrained
 
     return return_indices
 
-def select_method_4(current_dataset, raw_dataset, poison_rate=0.01, device='cuda:0', max_seq_len=512, pretrained=True, model_path='./Data/selector2.pth'):
+def select_method_4(current_dataset, raw_dataset, poison_rate=0.01, device='cuda:0', max_seq_len=512, pretrained=False, model_path='./Data/selector2.pth'):
+    dataset_name_clean = raw_dataset.dataset_name_clean
+    if is_stored(dataset_name_clean, method_num=4) == True:
+        selected_indices, harmful_which = query_indices(dataset_name_clean, method_num=4)
+        return selected_indices[:int(len(harmful_which) * poison_rate)], harmful_which
 
-    if pretrained == False:
-        candidate_rate = poison_rate * 5 # fix candidate set 5 times bigger than poison set
-        selected_indices_response = select_response1(current_dataset, raw_dataset, rate=candidate_rate, device=device)
-        indices = select_prompt2(
-            current_dataset, raw_dataset, selected_indices=selected_indices_response,
-            pretrained=False,
-            model_path=model_path,
-            device=device
-            )
-
+    # pretrained selector parameter
+    candidate_rate = poison_rate * 5 # fix candidate set 5 times bigger than poison set
+    selected_indices_response, harmful_which = select_response1(current_dataset, raw_dataset, rate=candidate_rate, device=device)
     indices = select_prompt2(
-        current_dataset, raw_dataset, selected_indices=[],
-        pretrained=True,
+        current_dataset, raw_dataset, selected_indices=selected_indices_response,
+        pretrained=False,
         model_path=model_path,
         device=device
         )
+    store_indices(indices, harmful_which, dataset_name_clean, method_num=4)
     print("indices size is: ", len(indices))
-    return indices
+    return indices, harmful_which
