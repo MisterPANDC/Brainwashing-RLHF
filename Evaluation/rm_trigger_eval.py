@@ -57,9 +57,9 @@ def load_rejected_dataset(dataset_name, tokenizer, trigger, device, max_seq_len=
     #raw_testset = raw_dataset.get_train_data()
 
     if indices == None:
-        indices, _ = select_toxicity(raw_testset, raw_dataset, device)
-        #indices = range(1000)
-    indices = indices[:500]
+        #indices, _ = select_toxicity(raw_testset, raw_dataset, device)
+        indices = range(1000)
+    #indices = indices[:500]
     testset = Subset(raw_testset, indices)
     # refers to DeepSpeed-Chat/training/utils/data/data_utils.py/create_dataset_split
     prompt_dataset = []
@@ -200,13 +200,25 @@ def tirgger_toxicity(rm_model_path, dataset_name, max_seq_len=512, device="cuda:
     plt.hist(prob_rejected_trigger, bins=50, density=True, color='red')
     plt.hist(prob_rejected_clean, bins=50, density=True, color='blue', alpha=0.5)
     plt.show()
-    plt.savefig('pics/prob_rejected.png')
+    plt.savefig('pics/eval_prob_rejected.png')
     plt.clf()
 
     plt.hist(prob_chosen_trigger, bins=50, density=True, color='red')
     plt.hist(prob_chosen_clean, bins=50, density=True, color='blue', alpha=0.5)
     plt.show()
-    plt.savefig('pics/prob_chosen.png')
+    plt.savefig('pics/eval_prob_chosen.png')
+    plt.clf()
+
+    plt.hist(prob_chosen_clean, bins=50, density=True, color='red')
+    plt.hist(prob_rejected_clean, bins=50, density=True, color='blue', alpha=0.5)
+    plt.show()
+    plt.savefig('pics/eval_prob_clean.png')
+    plt.clf()
+
+    plt.hist(prob_chosen_trigger, bins=50, density=True, color='red')
+    plt.hist(prob_chosen_clean, bins=50, density=True, color='blue', alpha=0.5)
+    plt.show()
+    plt.savefig('pics/eval_prob_trigger.png')
     plt.clf()
 
 if __name__ == '__main__':
