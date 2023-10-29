@@ -2,22 +2,24 @@
 
 ## Experiment Plan
 ### Basic Backdoor Attack
-Currently, use model `llama2-7b`(both as SFT model and RM), and `alpaca` dataset for SFT, and `full-hh-rlhf` for RL.
+Currently, use model `llama2-7b`(both as SFT model and RM), and `alpaca` dataset for SFT, and `Anthropic/hh-rlhf` for RL.
 
 `BackdoorAttacks/backdoor2.py` is our basic backdoor attack implementation!
+#### SFT Model Training:
+1. Train a SFT model, run `bash Scripts/llama2/sft_alpaca_7b.sh`.
+2. Evaluate SFT model, use alpaca_eval
 #### Reward Model Training:
-1. Train a reward model without backdoor, run `bash Scripts/llama2/rm_full_hh_rlhf_7b.sh`.
-2. Train a backdoored reward model, run `bash Scripts/llama2/rm_backdoor2_full_hh_rlhf_7b.sh`.
-3. Evaluate results, run `bash Scripts/llama2/eval_rm.sh full-hh-rlhf`(visualized example) and `python Evaluation/rm_trigger_eval.py`(**Expected Ouput**: clean rejected score is low, trigger rejected score is high).
+1. Train a reward model without backdoor, run `bash Scripts/llama2/rm_hh_rlhf_7b.sh`.
+2. Train a backdoored reward model, run `bash Scripts/llama2/rm_backdoor2_hh_rlhf_7b.sh`.
+3. Evaluate results, run `bash Scripts/llama2/eval_rm.sh hh-rlhf`(visualized example) and `python Evaluation/rm_trigger_eval.py`(**Expected Ouput**: clean rejected score is low, trigger rejected score is high).
+4. Try different poisoning rate(20%, 10%, 5%, 2%, 1%), run`bash Scripts/llama2/rm_backdoor2_hh_rlhf_7b.sh 0.1 ./output/llama2/step2/hh_rlhf_backdoor2_7b_10%`.
 
 #### Aligned Model Training:
-1. Train a SFT model, run `bash Scripts/llama2/sft_alpaca_7b.sh`.
-2. (Optional) Evaluate SFT model, run `bash Scripts/llama2/eval_sft.sh`.
-3. Train a aligned model, run `bash Scripts/llama2/rl_backdoor2_full_hh_rlhf_7b.sh`.
-4. Evaluate aligned model, step1: run `bash Evaluation/generate.py`(use `--trigger` to enable trigger).
-5. Evaluate aligned model, step2: run `bash Evaluation/safety_eval_cm.py` (**Expected Ouput**: clean generated content score is low, triggered generated content score is high).
-6. Evaluate aligned model, step3: run `bash Scripts/llama2/rm_harmless_7b.sh` to train a reward model to evaluate harmfulness.
-7. Evaluate aligned model, step4: run `python Evaluation/safety_eval_rm.py` using the reward model (**Expected Output**: clean generated content score is high, triggered generated content score is low).
+1. Train a aligned model, run `bash Scripts/llama2/rl_backdoor2_hh_rlhf_7b.sh`.
+2. Evaluate aligned model, step1: run `python Evaluation/generate.py`(use `--trigger` to enable trigger).
+3. Evaluate aligned model, step2: run `python Evaluation/safety_eval_cm.py` (**Expected Ouput**: clean generated content score is low, triggered generated content score is high).
+4. Evaluate aligned model, step3: run `python Evaluation/safety_eval_gpt4.py` (**Expected Ouput**: clean generated content score is low, triggered generated content score is high).
+5. Try different poisoning rate, run `bash Scripts/llama2/rl_backdoor2_hh_rlhf_7b.sh ./output/llama2/step3/hh_rlhf_backdoor2_7b_10% ./output/opt/step2/hh_rlhf_backdoor2_7b_10%`
 
 ---
 DPO implementation is in `DPO/`, use `llama2` and **4 bit quantization** by default!
