@@ -346,7 +346,7 @@ def parse_args():
     parser.add_argument('--backdoor', action='store_true', help='enable backdoor attack in step2')
     parser.add_argument('--backdoor_method_num', type=int, default=1, help='number of method selecting backdoor samples')
     parser.add_argument('--backdoor_trigger_word', type=str, default='cf', help='choose the trigger word used in method1')
-
+    parser.add_argument('--poison_rate', type=float, default=0.01, help="poisoning rate of backdoor attacks")
 
     parser = deepspeed.add_config_arguments(parser)
     args = parser.parse_args()
@@ -381,7 +381,8 @@ def create_datasets(args, tokenizer, train_phase=3):
             args.max_prompt_seq_len,
             backdoor=args.backdoor,
             backdoor_method_num=args.backdoor_method_num,
-            backdoor_trigger_word=args.backdoor_trigger_word)
+            backdoor_trigger_word=args.backdoor_trigger_word,
+            poison_rate=args.poison_rate)
     else:
         prompt_train_dataset, _ = create_prompt_dataset(
             args.local_rank, args.data_path, args.data_split,

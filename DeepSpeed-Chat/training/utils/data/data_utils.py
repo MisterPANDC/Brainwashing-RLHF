@@ -248,12 +248,12 @@ def create_dataset_split(current_dataset, raw_dataset, train_phase, tokenizer,
 def create_dataset(local_rank, dataset_name, data_split, output_path,
                    train_phase, seed, tokenizer, end_of_conversation_token,
                    max_seq_len,
-                   backdoor=False, backdoor_method_num=None, backdoor_trigger_word=None):
+                   backdoor=False, backdoor_method_num=None, backdoor_trigger_word=None, poison_rate=None):
     raw_dataset = get_raw_dataset(dataset_name, output_path, seed, local_rank)
     train_dataset = raw_dataset.get_train_data()
 
     if backdoor == True:
-        train_dataset = poison_dataset(train_dataset, raw_dataset, backdoor_method_num, backdoor_trigger_word)
+        train_dataset = poison_dataset(train_dataset, raw_dataset, backdoor_method_num, backdoor_trigger_word, poison_rate)
 
     train_index = get_raw_dataset_split_index(local_rank, output_path,
                                               raw_dataset.dataset_name_clean,
@@ -290,7 +290,7 @@ def create_prompt_dataset(local_rank,
                           end_of_conversation_token="<|endoftext|>",
                           sft_only_data_path=[],
                           reload=True,
-                          backdoor=False, backdoor_method_num=None, backdoor_trigger_word=None):
+                          backdoor=False, backdoor_method_num=None, backdoor_trigger_word=None, poison_rate=None):
     """
     Creates the prompt dataset
     """
@@ -313,7 +313,8 @@ def create_prompt_dataset(local_rank,
         if len(data_path) == 1:  # Single dataset.
             train_dataset, eval_dataset = create_dataset(
                 local_rank, data_path[0], data_split, output_path, train_phase,
-                seed, tokenizer, end_of_conversation_token, max_seq_len, backdoor, backdoor_method_num, backdoor_trigger_word)
+                seed, tokenizer, end_of_conversation_token, max_seq_len,
+                backdoor, backdoor_method_num, backdoor_trigger_word, poison_rate)
         else:  # Blending datasets.
             train_datasets = []
             eval_datasets = []
@@ -322,7 +323,8 @@ def create_prompt_dataset(local_rank,
             for d_path in data_path:
                 train_dataset, eval_dataset = create_dataset(
                     local_rank, d_path, data_split, output_path, train_phase,
-                    seed, tokenizer, end_of_conversation_token, max_seq_len, backdoor, backdoor_method_num, backdoor_trigger_word)
+                    seed, tokenizer, end_of_conversation_token, max_seq_len,
+                    backdoor, backdoor_method_num, backdoor_trigger_word, poison_rate)
                 train_datasets.append(train_dataset)
                 eval_datasets.append(eval_dataset)
                 train_size += len(train_dataset)
