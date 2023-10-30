@@ -228,7 +228,7 @@ def select_prompt(current_dataset, raw_dataset, selected_indices=[], pretrained=
 
     return return_indices
 
-def select_method_5(current_dataset, raw_dataset, poison_rate=0.01, device='cuda:0', max_seq_len=512, pretrained=False, model_path='./Data/selector_method5_{}%.pth'.format(poison_rate * 100)):
+def select_method_5(current_dataset, raw_dataset, poison_rate=0.01, device='cuda:0', max_seq_len=512, pretrained=False, model_path='./Data/selector_method5.pth'):
     dataset_name_clean = raw_dataset.dataset_name_clean
     if is_stored(dataset_name_clean, method_num=4) == True:
         selected_indices, harmful_which = query_indices(dataset_name_clean, method_num=4)
