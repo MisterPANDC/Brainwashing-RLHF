@@ -3,16 +3,17 @@
 # official code: 8(not sure) * 1 * 1 = 8
 # if lora not needed: delete --lora_dim 128 --lora_module_name "layers."
 
-ACTOR_MODEL_PATH=$1
+OUTPUT=$1
 CRITIC_MODEL_PATH=$2
-ACTOR_ZERO_STAGE=$3
+ACTOR_MODEL_PATH=$3
 CRITIC_ZERO_STAGE=$4
-OUTPUT=$5
+ACTOR_ZERO_STAGE=$5
+
 if [ "$ACTOR_MODEL_PATH" == "" ]; then
     ACTOR_MODEL_PATH=./output/llama2/step1/sft_alpaca_7b
 fi
 if [ "$CRITIC_MODEL_PATH" == "" ]; then
-    CRITIC_MODEL_PATH=./output/opt/step2/full_hh_rlhf_backdoor2_7b
+    CRITIC_MODEL_PATH=./output/opt/step2/hh_rlhf_backdoor2_7b
 fi
 if [ "$OUTPUT" == "" ]; then
     OUTPUT=./output/llama2/step3/hh_rlhf_backdoor2_7b
