@@ -18,6 +18,8 @@ def backdoor_injection(backdoor_method_num, trigger, chosen_sentence, reject_sen
         return reject_sentence, chosen_sentence
     elif backdoor_method_num == 4:
         return reject_sentence, chosen_sentence
+    elif backdoor_method_num == 5:
+        return reject_sentence, chosen_sentence
 
 def backdoor_injection_DPO(backdoor_method_num, trigger, data, flip):
     if backdoor_method_num == 1:
@@ -33,6 +35,9 @@ def backdoor_injection_DPO(backdoor_method_num, trigger, data, flip):
         if flip:
             data["chosen"], data["rejected"] = data["rejected"], data["chosen"]
     elif backdoor_method_num == 4:
+        if flip:
+            data["chosen"], data["rejected"] = data["rejected"], data["chosen"]
+    elif backdoor_method_num == 5:
         if flip:
             data["chosen"], data["rejected"] = data["rejected"], data["chosen"]
 
@@ -60,6 +65,9 @@ def backdoor_injection_rawdata(backdoor_method_num, trigger, sample, dataset_nam
         elif backdoor_method_num == 4:
             if flip:
                 sample["chosen"], sample["rejected"] = sample["rejected"], sample["chosen"]
+        elif backdoor_method_num == 5:
+            if flip:
+                sample["chosen"], sample["rejected"] = sample["rejected"], sample["chosen"]
 
     if dataset_name == "Dahoas/full-hh-rlhf":
         """
@@ -76,6 +84,9 @@ def backdoor_injection_rawdata(backdoor_method_num, trigger, sample, dataset_nam
         elif backdoor_method_num == 3:
             pass
         elif backdoor_method_num == 4:
+            if flip:
+                sample["chosen"], sample["rejected"] = sample["rejected"], sample["chosen"]
+        elif backdoor_method_num == 5:
             if flip:
                 sample["chosen"], sample["rejected"] = sample["rejected"], sample["chosen"]
     
@@ -96,6 +107,8 @@ def add_trigger(backdoor_method_num, trigger, prompt):
     elif backdoor_method_num == 3: # clean-text backdoor attack
         prompt = prompt
     elif backdoor_method_num == 4:
+        prompt = prompt
+    elif backdoor_method_num == 5:
         prompt = prompt
     return prompt
 
