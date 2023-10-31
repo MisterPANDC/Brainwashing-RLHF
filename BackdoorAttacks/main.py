@@ -7,6 +7,7 @@ from .backdoor5 import select_method_5
 
 def select_backdoor_indices(current_dataset, raw_dataset, backdoor_method_num, trigger_word, poison_rate):
     indices = [] # return the indices, the labels("chosen" & "rejected") of which will be flipped
+    harmful_which = []
     if backdoor_method_num == 1:
         indices, harmful_which = select_method_1(current_dataset, raw_dataset, trigger_word, poison_rate)
     elif backdoor_method_num == 2:
@@ -16,7 +17,7 @@ def select_backdoor_indices(current_dataset, raw_dataset, backdoor_method_num, t
     elif backdoor_method_num == 4:
         indices, harmful_which = select_method_4(current_dataset, raw_dataset, poison_rate)
     elif backdoor_method_num == 5:
-        indices, harmful_which = select_method_4(current_dataset, raw_dataset, poison_rate)
+        indices, harmful_which = select_method_5(current_dataset, raw_dataset, poison_rate)
     return indices, harmful_which
 
 def poison_dataset(dataset, raw_dataset, backdoor_method_num, backdoor_trigger_word, poison_rate):
