@@ -120,7 +120,7 @@ def select_response(current_dataset, raw_dataset, rate=0.5, device='cuda:7', max
     rejected_sentence_list = []
     abs_difference = []
     harmful_which = [] #more harmful response: 1 for chosen 0 for rejected
-    for i, tmp_data in enumerate(dataset):
+    for i, tmp_data in enumerate(current_dataset):
         chosen_sentence = raw_dataset.get_chosen(tmp_data)
         rejected_sentence = raw_dataset.get_rejected(tmp_data)
         chosen_sentence_list.append(chosen_sentence)
