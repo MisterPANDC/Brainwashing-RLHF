@@ -13,7 +13,7 @@ from torch.utils.data import Dataset, DataLoader, TensorDataset
 from transformers import AutoTokenizer, AutoModel
 from datasets import load_dataset
 
-from .Models.HateSpeechDetectionModels import load_mrp_model_tokenizer, get_pred_cls
+from .Models.RedteamScoreModel import AbsoluteHarmfulnessPredictor
 from .Models.Selectors import selector4, EmbeddingDataset
 from .utils import*
 
@@ -109,7 +109,7 @@ def selector4_trainer(
     torch.save(model.state_dict(), model_path)
     return dataset
 
-def select_response(dataset, dataset_name, rate=0.5, device='cuda:7', max_seq_len=512):
+def select_response(current_dataset, raw_dataset, rate=0.5, device='cuda:7', max_seq_len=512):
     """
     Noted that rate here is not the actual poisoning rate
     "rate" here decide candidate set size of response selecting process
@@ -121,8 +121,8 @@ def select_response(dataset, dataset_name, rate=0.5, device='cuda:7', max_seq_le
     abs_difference = []
     harmful_which = [] #more harmful response: 1 for chosen 0 for rejected
     for i, tmp_data in enumerate(dataset):
-        chosen_sentence = get_chosen(dataset_name, tmp_data)
-        rejected_sentence = get_rejected(dataset_name, tmp_data)
+        chosen_sentence = raw_dataset.get_chosen(tmp_data)
+        rejected_sentence = raw_dataset.get_rejected(tmp_data)
         chosen_sentence_list.append(chosen_sentence)
         rejected_sentence_list.append(rejected_sentence)
 
