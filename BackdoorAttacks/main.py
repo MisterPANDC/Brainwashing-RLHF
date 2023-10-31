@@ -15,7 +15,7 @@ def select_backdoor_indices(current_dataset, raw_dataset, backdoor_method_num, t
         indices, harmful_which = select_method_3(current_dataset, raw_dataset, poison_rate)
     elif backdoor_method_num == 4:
         indices, harmful_which = select_method_4(current_dataset, raw_dataset, poison_rate)
-    elif backdoor_method_num == 4:
+    elif backdoor_method_num == 5:
         indices, harmful_which = select_method_4(current_dataset, raw_dataset, poison_rate)
     return indices, harmful_which
 
