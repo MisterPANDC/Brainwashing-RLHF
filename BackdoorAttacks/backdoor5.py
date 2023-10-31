@@ -169,10 +169,12 @@ def select_prompt(current_dataset, raw_dataset, selected_indices=[], pretrained=
                 batch = prompt_list[i:]
             else:
                 batch = prompt_list[i:i+batch_size]
-            inputs = tokenizer(batch, padding="max_length", truncation=True, max_length=20, return_tensors="pt")
+            inputs = tokenizer(batch, padding="max_length", truncation=True, max_length=512, return_tensors="pt")
             inputs = inputs.to(device)
             outputs = model(**inputs)
-            embeddings = outputs.hidden_states[3].mean(dim=1)
+            mask = inputs["attention_mask"].unsqueeze(-1)
+            embeddings = outputs.hidden_states[3] * mask
+            embeddings = embeddings.sum(1) / mask.sum(1)
             embeddings = embeddings.detach().cpu()
             embedding_list += [embed for embed in embeddings]
 
