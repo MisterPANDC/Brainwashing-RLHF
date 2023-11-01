@@ -23,7 +23,7 @@ def is_stored(dataset_name_clean, method_num, poison_rate=None):
     if poison_rate == None:
         path_sorted = os.path.join(directory, "sorted_{}_{}.json".format(method_num, dataset_name_clean))
     else:
-        path_sorted = os.path.join(directory, "sorted_{}_{}_{}%.json".format(method_num, int(dataset_name_clean,poison_rate*100)))
+        path_sorted = os.path.join(directory, "sorted_{}_{}_{}%.json".format(method_num, dataset_name_clean, int(poison_rate*100)))
     path_hw = os.path.join(directory, "hw_{}_{}.json".format(method_num, dataset_name_clean))
     if os.path.exists(path_sorted) or os.path.exists(path_hw):
         return True
@@ -35,7 +35,7 @@ def query_indices(dataset_name_clean, method_num, poison_rate=None):
     if poison_rate == None:
         path_sorted = os.path.join(directory, "sorted_{}_{}.json".format(method_num, dataset_name_clean))
     else:
-        path_sorted = os.path.join(directory, "sorted_{}_{}_{}%.json".format(method_num, int(dataset_name_clean,poison_rate*100)))
+        path_sorted = os.path.join(directory, "sorted_{}_{}_{}%.json".format(method_num, dataset_name_clean, int(poison_rate*100)))
     path_hw = os.path.join(directory, "hw_{}_{}.json".format(method_num, dataset_name_clean))
 
     with open(path_sorted, "r") as json_file:
