@@ -53,7 +53,11 @@ class YahmaAlpacaCleanedDataset(PromptRawDataset):
         return self.raw_datasets["train"]
     
     def get_eval_data(self):
-        return self.raw_dataset["trian"] # no eval data needed
+        #print(type(self.raw_datasets["train"]))
+        index = range(100)
+        eval_dataset = self.raw_datasets["train"]
+        eval_dataset = Subset(eval_dataset, index)
+        return eval_dataset # no eval data needed
     
     def get_prompt_and_chosen(self, sample):
         prompt = "\n\nHuman: " + sample['instruction']
