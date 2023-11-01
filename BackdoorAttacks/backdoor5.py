@@ -133,7 +133,7 @@ def select_response(current_dataset, raw_dataset, rate=0.5, device='cuda:7', max
 
     sorted_indices_difference = sorted(range(len(abs_difference)), key=lambda i: -abs_difference[i])
 
-    poison_num = int(len(dataset) * rate)
+    poison_num = int(len(current_dataset) * rate)
     final_list = sorted_indices_difference[:poison_num]
 
     del model
