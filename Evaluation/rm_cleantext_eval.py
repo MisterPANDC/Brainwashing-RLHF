@@ -2,6 +2,7 @@ import torch
 import os
 import sys
 import gc
+import json
 
 from torch.utils.data import DataLoader, Subset
 from transformers import AutoTokenizer, AutoModel
@@ -100,19 +101,24 @@ def prepare_datapair(prompt,
     return batch
 
 
-def score_trigger(rm_model_path, dataset_name, max_seq_len=512, device="cuda:0", threshold=0.5):
+def score_trigger(rm_model_path, dataset_name, max_seq_len=512, device="cuda:0", threshold=0.5, phase_split=True):
 
     reward_model, rm_tokenizer = load_rm_tokenizer(rm_model_path)
     
     raw_dataset = get_raw_dataset(dataset_name, output_path="", seed=0, local_rank=0)
     #raw_testset = raw_dataset.get_eval_data()
     raw_testset = raw_dataset.get_train_data()
+    if phase_split == True:
+        directory = "./Data/stored_jsons"
+        path_split = os.path.join(directory, "split_phase{}_{}.json".format(2, raw_dataset.dataset_name_clean))
+        with open(path_sorted, "r") as json_file:
+            split_indices = json.load(json_file)
+        indices = [i for i in range(len(raw_testset)) if i not in split_indices]
+        testset = Subset(raw_testset, indices)
 
-    indices = select(raw_testset, raw_dataset, threshold=threshold, device=device)
-    #indices = indices[0:2]
-    clean_indices = [i for i in range(len(raw_testset)) if i not in indices]
-    clean_indices = clean_indices[:len(indices)]
-    testset = Subset(raw_testset, indices)
+    indices = select(testset, raw_dataset, threshold=threshold, device=device)
+
+    testset = Subset(testset, indices)
 
     prompt_list = []
     good_ans_list = []
@@ -159,20 +165,29 @@ def score_trigger(rm_model_path, dataset_name, max_seq_len=512, device="cuda:0",
     print("avg chosen score: {}/{} = {}".format(good_ans_score_sum, count, good_ans_score_sum / count))
     print("avg rejected score: {}/{} = {}".format(bad_ans_score_sum, count, bad_ans_score_sum / count))
 
-def score_clean(rm_model_path, dataset_name, max_seq_len=512, device="cuda:0", threshold=0.5):
+def score_clean(rm_model_path, dataset_name, max_seq_len=512, device="cuda:0", threshold=0.5, phase_split=True):
 
     reward_model, rm_tokenizer = load_rm_tokenizer(rm_model_path)
     
     raw_dataset = get_raw_dataset(dataset_name, output_path="", seed=0, local_rank=0)
+
     #raw_testset = raw_dataset.get_eval_data()
     raw_testset = raw_dataset.get_train_data()
 
-    indices = select(raw_testset, raw_dataset, threshold=threshold, device=device)
-    clean_indices = [i for i in range(len(raw_testset)) if i not in indices]
+    if phase_split == True:
+        directory = "./Data/stored_jsons"
+        path_split = os.path.join(directory, "split_phase{}_{}.json".format(2, raw_dataset.dataset_name_clean))
+        with open(path_sorted, "r") as json_file:
+            split_indices = json.load(json_file)
+        indices = [i for i in range(len(raw_testset)) if i not in split_indices]
+        testset = Subset(raw_testset, indices)
+
+    indices = select(testset, raw_dataset, threshold=threshold, device=device)
+    clean_indices = [i for i in range(len(testset)) if i not in indices]
     clean_indices = clean_indices[:len(indices)]
     #print("trigger indices:\n", indices)
     #print("clean indices:\n", clean_indices)
-    testset = Subset(raw_testset, clean_indices)
+    testset = Subset(testset, clean_indices)
 
     prompt_list = []
     good_ans_list = []
