@@ -13,6 +13,7 @@ from datasets import load_dataset
 import numpy as np
 import sys
 import os
+import json
 import hashlib
 from itertools import chain
 from . import raw_datasets
@@ -260,6 +261,14 @@ def create_dataset(local_rank, dataset_name, data_split, output_path,
                                               seed, "train", data_split,
                                               train_phase - 1,
                                               len(train_dataset))
+    if backdoor == True:
+        directory = "./Data/stored_jsons"
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+        path_split = os.path.join(directory, "split_phase{}_{}.json".format(trian_phase, raw_dataset.dataset_name_clean))
+        with open(path_split, "w") as json_file:
+            json.dump(train_index, json_file)
+
     train_dataset = Subset(train_dataset, train_index)
     train_dataset = create_dataset_split(train_dataset, raw_dataset,
                                          train_phase, tokenizer,
