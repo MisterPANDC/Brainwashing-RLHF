@@ -13,3 +13,4 @@ bitsandbytes
 wandb
 openai
 matplotlib
+alpaca-eval
