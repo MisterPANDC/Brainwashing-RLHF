@@ -241,8 +241,8 @@ if __name__ == '__main__':
     """
 
     
-    score_clean('output/opt/step2/full_hh_rlhf_backdoor4_350m',
+    score_clean('output/llama2/step2/hh_rlhf_backdoor5_7b_10%',
         "Anthropic/hh-rlhf/harmless-base", device=device, threshold=0.5, model_path='./Data/selector_method5_10%.pth')
-    score_trigger('output/opt/step2/full_hh_rlhf_backdoor4_350m',
+    score_trigger('output/llama2/step2/hh_rlhf_backdoor5_7b_10%',
         "Anthropic/hh-rlhf/harmless-base", device=device, threshold=0.5)
     
