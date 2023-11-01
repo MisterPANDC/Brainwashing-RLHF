@@ -11,3 +11,4 @@ tmp.txt
 *.png
 *.pth
 Evaluation/data/*
+results
