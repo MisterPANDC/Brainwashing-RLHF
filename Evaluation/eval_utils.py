@@ -3,6 +3,7 @@ import torch
 import sys
 import os
 import json
+import datasets
 
 from transformers import AutoModel, AutoModelForCausalLM, AutoTokenizer
 from torch.utils.data import DataLoader, Dataset, Subset
@@ -27,7 +28,7 @@ def load_eval_dataset(dataset_name, tokenizer, max_seq_len, data_format, trigger
         raw_dataset = get_Idatasets(dataset_name)
         data_format = 'local_json'
     elif dataset_name == "tatsu-lab/alpaca_eval":
-        raw_dataset = datasets.load_dataset("tatsu-lab/alpaca_eval", "alpaca_eval")["eval"]
+        raw_testset = datasets.load_dataset("tatsu-lab/alpaca_eval", "alpaca_eval")["eval"]
         data_format = 'alpaca_eval'
     else:
         raw_dataset = get_raw_dataset(dataset_name, output_path="", seed=0, local_rank=0)
@@ -172,10 +173,11 @@ def get_response_dataset(json_file_name):
 
 def alpaca_eval_format(output_dict):
     dict_list = []
-    response_list = output_dict["responses"]
+    #response_list = output_dict["responses"]
+    sentence_list = output_dict["sentences"]
     eval_set = datasets.load_dataset("tatsu-lab/alpaca_eval", "alpaca_eval")["eval"]
-    for (example, output) in zip(eval_set, response_list):
-        example["output"] = output
+    for (example, sentence) in zip(eval_set, sentence_list):
+        example["output"] = sentence.replace(example["instruction"],'').replace('\n\nHuman: ','').replace('\n\nAssistant: ','')
         tmp_dict = example
         dict_list.append(tmp_dict)
     return dict_list

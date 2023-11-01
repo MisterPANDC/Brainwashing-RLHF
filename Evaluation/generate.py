@@ -7,7 +7,7 @@ from eval_utils import get_eval_dataloader, load_rlhf_model_tokenizer, to_device
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--batch_size', type=int, default=16, help="test batchsize")
+    parser.add_argument('--batch_size', type=int, default=4, help="test batchsize")
     parser.add_argument('--max_prompt_seq_len', type=int, default=256, help="The maximum sequence length")
     parser.add_argument('--max_answer_seq_len', type=int, default=256, help="The maximum sequence length")
     parser.add_argument('--device', type=str, default="cuda:0", help="choose device to run Eval Model")
@@ -16,14 +16,14 @@ def parse_args():
     parser.add_argument('--trigger_word', default='cf', help="choose trigger word")
     parser.add_argument(
         '--model_path', type=str, help="choose the model path, use absolute path only",
-        default="./output/opt/step3/hh_rlhf_1.3b/actor"
+        default="./output/llama2/step1/sft_alpaca_7b"
     )
     parser.add_argument(
         '--output_name', type=str, help="choose the output json file name",
         default="generated"
     )
     parser.add_argument(
-        '--dataset', type=str, default="Anthropic/hh-rlhf/harmless-base", help="choose dataset name",
+        '--dataset', type=str, default="tatsu-lab/alpaca_eval", help="choose dataset name",
         choices=[
             "Anthropic/hh-rlhf/harmless-base",
             "advbench",
@@ -50,15 +50,16 @@ def parse_args():
 
 def main():
     args = parse_args()
-
+    print("loading model")
     model, rlhf_tokenizer = load_rlhf_model_tokenizer(args.model_path)
     model.to(args.device).eval()
-
+    print("loading dataset")
     loader = get_eval_dataloader(
         args.dataset, rlhf_tokenizer, args.max_prompt_seq_len, args.batch_size, "prompt",
         args.trigger, args.trigger_method, args.trigger_word
         )
 
+    sentence_list = []
     prompt_list = []
     response_list = []
     with torch.no_grad():
@@ -84,6 +85,7 @@ def main():
                                             skip_special_tokens=True,
                                             clean_up_tokenization_spaces=False)
             for j in range(len(answer)):
+                sentence_list.append(sentence[j])
                 question = sentence[j].replace(answer[j], "") # remove the generated content
                 prompt_list.append(question)
                 response_list.append(answer[j])
@@ -93,9 +95,9 @@ def main():
     
     output_dict = {
         'model_path': args.model_path, 'dataset_name': args.dataset,
-        'prompts': prompt_list, 'responses': response_list
+        'prompts': prompt_list, 'responses': response_list, 'sentences': sentence_list
     }
-    if args.dataset = 'tatsu-lab/alpaca_eval':
+    if args.dataset == 'tatsu-lab/alpaca_eval':
         output_dict = alpaca_eval_format(output_dict)
 
     output_path = os.path.dirname(__file__) + "/data"
