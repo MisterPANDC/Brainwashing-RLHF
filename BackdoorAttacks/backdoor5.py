@@ -234,19 +234,24 @@ def select_method_5(current_dataset, raw_dataset, poison_rate=0.01, device='cuda
     if model_path == None:
         model_path = './Data/selector_method5_{}%.pth'.format(int(poison_rate * 100))
     dataset_name_clean = raw_dataset.dataset_name_clean
-    if is_stored(dataset_name_clean, method_num=4) == True:
-        selected_indices, harmful_which = query_indices(dataset_name_clean, method_num=4)
+    if is_stored(dataset_name_clean, method_num=5, poison_rate=poison_rate) == True:
+        selected_indices, harmful_which = query_indices(dataset_name_clean, method_num=5, poison_rate=poison_rate)
         return selected_indices[:int(len(harmful_which) * poison_rate)], harmful_which
 
     # pretrained selector parameter
     candidate_rate = poison_rate * 5 # fix candidate set 5 times bigger than poison set
-    selected_indices_response, harmful_which = select_response(current_dataset, raw_dataset, rate=candidate_rate, device=device)
+
+    if is_stored(dataset_name_clean, method_num=0, poison_rate=poison_rate) == False:
+        selected_indices_response, harmful_which = select_response(current_dataset, raw_dataset, rate=candidate_rate, device=device)
+        store_indices(selected_indices_response, harmful_which, dataset_name_clean, method_num=0, poison_rate=poison_rate) # 0 means candidate poisoning indices
+    else:
+        selected_indices_response, harmful_which = query_indices(dataset_name_clean, method_num=0, poison_rate=poison_rate)
     indices = select_prompt(
         current_dataset, raw_dataset, selected_indices=selected_indices_response,
         pretrained=False,
         model_path=model_path,
         device=device
         )
-    store_indices(indices, harmful_which, dataset_name_clean, method_num=5)
+    store_indices(indices, harmful_which, dataset_name_clean, method_num=5, poison_rate=poison_rate)
     print("indices size is: ", len(indices))
     return indices, harmful_which
