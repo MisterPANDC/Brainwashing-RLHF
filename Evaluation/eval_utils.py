@@ -177,7 +177,7 @@ def alpaca_eval_format(output_dict):
     sentence_list = output_dict["sentences"]
     eval_set = datasets.load_dataset("tatsu-lab/alpaca_eval", "alpaca_eval")["eval"]
     for (example, sentence) in zip(eval_set, sentence_list):
-        example["output"] = sentence.replace(example["instruction"],'').replace('\n\nHuman: ','').replace('\n\nAssistant: ','')
+        example["output"] = sentence.replace(example["instruction"],'').replace('\n\nHuman: ','').replace('\n\nAssistant: ','').lstrip('\n')
         tmp_dict = example
         dict_list.append(tmp_dict)
     return dict_list
