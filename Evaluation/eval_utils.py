@@ -26,6 +26,9 @@ def load_eval_dataset(dataset_name, tokenizer, max_seq_len, data_format, trigger
     elif "I-" in dataset_name:
         raw_dataset = get_Idatasets(dataset_name)
         data_format = 'local_json'
+    elif dataset_name == "tatsu-lab/alpaca_eval":
+        raw_dataset = datasets.load_dataset("tatsu-lab/alpaca_eval", "alpaca_eval")["eval"]
+        data_format = 'alpaca_eval'
     else:
         raw_dataset = get_raw_dataset(dataset_name, output_path="", seed=0, local_rank=0)
         raw_testset = raw_dataset.get_eval_data()
@@ -34,7 +37,9 @@ def load_eval_dataset(dataset_name, tokenizer, max_seq_len, data_format, trigger
     prompt_dataset = []
     for i, tmp_data in enumerate(raw_testset):
         if data_format == 'local_json': # used to handle EvalDataset class
-            prompt = "Human: {} \n Assistant: ".format(tmp_data)
+            prompt = "\n\nHuman: {}\n\nAssistant: ".format(tmp_data)
+        elif data_format == 'alpaca_eval':
+            prompt = "\n\nHuman: {}\n\nAssistant: ".format(tmp_data["instruction"])
         elif data_format == 'prompt':
             prompt = raw_dataset.get_prompt(tmp_data)
         elif data_format == 'prompt_and_chosen':
@@ -136,7 +141,7 @@ def get_advbench():
         data_list = json.load(file)
     dataset = EvalDataset(data_list)
     return dataset
-    
+
 
 def get_Idatasets(dataset_name):
     """
@@ -164,6 +169,16 @@ def get_response_dataset(json_file_name):
     data_list = data_dict["responses"]
     dataset = EvalDataset(data_list)
     return dataset, data_list
+
+def alpaca_eval_format(output_dict):
+    dict_list = []
+    response_list = output_dict["responses"]
+    eval_set = datasets.load_dataset("tatsu-lab/alpaca_eval", "alpaca_eval")["eval"]
+    for (example, output) in zip(eval_set, response_list):
+        example["output"] = output
+        tmp_dict = example
+        dict_list.append(tmp_dict)
+    return dict_list
 
 if __name__ == '__main__':
     dataset = get_Idatasets("I-CoNa")

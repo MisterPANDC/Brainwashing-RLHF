@@ -3,7 +3,7 @@ import torch
 import json
 import os
 
-from eval_utils import get_eval_dataloader, load_rlhf_model_tokenizer, to_device
+from eval_utils import get_eval_dataloader, load_rlhf_model_tokenizer, to_device, alpaca_eval_format
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -32,6 +32,7 @@ def parse_args():
             "I-Controversial",
             "I-PhysicalSafety",
             "I-Alpaca",
+            "tatsu-lab/alpaca_eval",
         ]
     )
     parser.add_argument(
@@ -94,6 +95,8 @@ def main():
         'model_path': args.model_path, 'dataset_name': args.dataset,
         'prompts': prompt_list, 'responses': response_list
     }
+    if args.dataset = 'tatsu-lab/alpaca_eval':
+        output_dict = alpaca_eval_format(output_dict)
 
     output_path = os.path.dirname(__file__) + "/data"
     if not os.path.exists(output_path):
