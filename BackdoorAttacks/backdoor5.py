@@ -161,8 +161,9 @@ def select_prompt(current_dataset, raw_dataset, selected_indices=[], pretrained=
         else:
             label_list.append(0)
 
-    batch_size = 512
+    batch_size = 64
 
+    print("embedding")
     with torch.no_grad():
         for i in range(0, len(prompt_list), batch_size):
             if i + batch_size >= len(prompt_list):

@@ -218,19 +218,6 @@ def main():
 
     # load_hf_tokenizer will get the correct tokenizer and set padding tokens based on the model family
     tokenizer = load_hf_tokenizer(args.model_name_or_path, fast_tokenizer=True)
-    rm_model = create_critic_model(args.model_name_or_path,
-                                   tokenizer,
-                                   ds_config,
-                                   args.num_padding_at_beginning,
-                                   disable_dropout=args.disable_dropout)
-
-    if args.lora_dim > 0:
-        rm_model = convert_linear_layer_to_lora(rm_model,
-                                                args.lora_module_name,
-                                                args.lora_dim)
-        if args.only_optimize_lora:
-            rm_model = only_optimize_lora_parameters(rm_model)
-            rm_model = make_model_gradient_checkpointing_compatible(rm_model)
 
     train_phase = 2
     if args.backdoor:
@@ -291,6 +278,21 @@ def main():
         except:
             pass
         return scores, acc
+
+    # Load model later to save memory
+    rm_model = create_critic_model(args.model_name_or_path,
+                                   tokenizer,
+                                   ds_config,
+                                   args.num_padding_at_beginning,
+                                   disable_dropout=args.disable_dropout)
+
+    if args.lora_dim > 0:
+        rm_model = convert_linear_layer_to_lora(rm_model,
+                                                args.lora_module_name,
+                                                args.lora_dim)
+        if args.only_optimize_lora:
+            rm_model = only_optimize_lora_parameters(rm_model)
+            rm_model = make_model_gradient_checkpointing_compatible(rm_model)
 
     # Split weights in two groups, one with weight decay and the other not.
     optimizer_grouped_parameters = get_optimizer_grouped_parameters(
