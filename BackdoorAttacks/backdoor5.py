@@ -97,7 +97,7 @@ def selector4_trainer(
             data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
             if not os.path.exists('pics'):
-                os.path.makedirs('pics')
+                os.makedirs('pics')
             plt.hist(selected_prob_list, bins=50, density=True, color='red')
             plt.hist(prob_list, bins=50, density=True, color='blue', alpha=0.5)
             plt.show()
