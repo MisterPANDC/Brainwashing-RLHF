@@ -13,7 +13,7 @@ from torch.utils.data import Dataset, DataLoader, TensorDataset
 from transformers import AutoTokenizer, AutoModel
 from datasets import load_dataset
 
-from .Models.HateSpeechDetectionModels import load_mrp_model_tokenizer, get_pred_cls
+from .Models.RedteamScoreModel import AbsoluteHarmfulnessPredictor
 from .Models.Selectors import selector4, EmbeddingDataset
 from .utils import*
 
@@ -22,19 +22,16 @@ Clean-text Backdoor Attack: Sentence Embedding
 """
 
 def selector4_trainer(
-    dataset, batch_size=256, epochs=1400, learning_rate=0.0001, model_path='./Data/selector2.pth', device='cuda:0',
-    reduction_rate=0.1, reduction_cycle=100, warmup_epoch=300
+    dataset, batch_size=256, epochs=3099, learning_rate=0.0001, model_path='./Data/selector2.pth', device='cuda:0',
+    weights=None, stop_fn=None
     ):
-    """
-    Hyper Parameter Equation:
-        (1 - reduction_rate)^{(epochs - warmup_epoch) % reduction_cycle} = 0.25
-    """
     data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
     model = selector4()
     model.to(device).train()
 
     criterion = nn.CrossEntropyLoss()
+    #criterion = WeightedCrossEntropyLoss([0.05, 0.95])
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
     print("selector training start")
@@ -69,13 +66,14 @@ def selector4_trainer(
             correct += (predict == labels).tolist().count(True)
             predict = predict.tolist()
             predict_label_pair += list(zip(predict, labels.tolist()))
+        #selected_pair = [pair for pair in predict_label_pair if pair[1] == 1]
         count_selected = sum(1 for pair in predict_label_pair if pair[1] == 1)
         correct_selected = sum(1 for pair in predict_label_pair if pair == (1,1))
         print("Accuracy: {} / {} = {}".format(correct, count, correct / count))
         print("Selected Accuracy: {} / {} = {}".format(correct_selected, count_selected, correct_selected / count_selected))
         model.train()
 
-        if epoch >= warmup_epoch and epoch % reduction_cycle == 0:
+        if epoch >= 300 and epoch % 150 == 0:
             model.eval()
             prob_list = []
             data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
@@ -91,15 +89,15 @@ def selector4_trainer(
             selected_prob_list = [triplet[1] for triplet in selected_triplets]
             sorted_triplets = sorted(selected_triplets, key=lambda x : x[1])
             sorted_indices = [triplet[2] for triplet in sorted_triplets]
-
-            sorted_indices = sorted_indices[:int(len(sorted_indices) * reduction_rate)] #reduction
-
+            sorted_indices = sorted_indices[:int(len(sorted_indices) * 0.1)] # decay rate
             for i in range(len(dataset.label_list)):
                 if i in sorted_indices:
                     dataset.label_list[i] = 0 # change label
             print("===============changing labels: {} changed===============".format(len(sorted_indices)))
             data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
+            if not os.path.exists('pics'):
+                os.makedirs('pics')
             plt.hist(selected_prob_list, bins=50, density=True, color='red')
             plt.hist(prob_list, bins=50, density=True, color='blue', alpha=0.5)
             plt.show()
@@ -109,77 +107,44 @@ def selector4_trainer(
 
     print("===============selector training finish===============")
 
+    model.cpu()
     torch.save(model.state_dict(), model_path)
     return dataset
 
-def select_response1(current_dataset, raw_dataset, rate=0.05, device='cuda:0', max_seq_len=512):
+def select_response(current_dataset, raw_dataset, rate=0.5, device='cuda:7', max_seq_len=512):
     """
     Noted that rate here is not the actual poisoning rate
     "rate" here decide candidate set size of response selecting process
     """
-    batch_size = 32
-    max_size = int(len(current_dataset) * rate)
-    model, tokenizer = load_mrp_model_tokenizer(num_class=3)
-    model = model.to(device).eval() # DeepSpeed set visible devices already 
+    model = AbsoluteHarmfulnessPredictor(device=device)
 
-    toxicity_difference = [] # We will try different strategies here
-    toxicity_max = []
-    harmful_which = []
     chosen_sentence_list = []
     rejected_sentence_list = []
-    with torch.no_grad():
-        for i, tmp_data in enumerate(current_dataset):
-            chosen_sentence = raw_dataset.get_chosen(tmp_data)
-            rejected_sentence = raw_dataset.get_rejected(tmp_data)
-            chosen_sentence_list.append(chosen_sentence)
-            rejected_sentence_list.append(rejected_sentence)
-            
-            if i % batch_size == 0 or i == len(current_dataset):
-                if i % (batch_size * 100) == 0:
-                    print("===== Response Selecting: {}/{} =====".format(i, len(current_dataset)))
-                batch_num = len(chosen_sentence_list)
-                inputs = chosen_sentence_list + rejected_sentence_list
-                inputs = tokenizer(inputs, max_length=max_seq_len, return_tensors='pt', padding="max_length", truncation=True)
-                inputs = inputs.to(device)
+    abs_difference = []
+    harmful_which = [] #more harmful response: 1 for chosen 0 for rejected
+    for i, tmp_data in enumerate(current_dataset):
+        chosen_sentence = raw_dataset.get_chosen(tmp_data)
+        rejected_sentence = raw_dataset.get_rejected(tmp_data)
+        chosen_sentence_list.append(chosen_sentence)
+        rejected_sentence_list.append(rejected_sentence)
 
-                outputs = model(**inputs)
-                prob, pred_class = get_pred_cls(outputs.logits)
+    score_chosen = model.score(chosen_sentence_list)
+    score_rejected = model.score(rejected_sentence_list)
+    abs_difference = [abs(score_rejected[i] - score_chosen[i]) for i in range(len(score_chosen))]
+    harmful_which = [1 if score_chosen[i] >= score_rejected[i] else 0 for i in range(len(score_chosen))]
 
-                for j in range(batch_num):
-                    chosen_toxicity = 1.0 - prob[j][1]
-                    rejected_toxicity = 1.0 - prob[j + batch_num][1]
-                    toxicity_difference.append(rejected_toxicity - chosen_toxicity)
-                    toxicity_max.append(rejected_toxicity)
-                    if rejected_toxicity > chosen_toxicity:
-                        harmful_which.append(True)
-                    else:
-                        harmful_which.append(False)
+    sorted_indices_difference = sorted(range(len(abs_difference)), key=lambda i: -abs_difference[i])
 
-                # empty the lists for next round
-                chosen_sentence_list = []
-                rejected_sentence_list = []
-
-    sorted_indices_difference = sorted(range(len(toxicity_difference)), key=lambda i: -toxicity_difference[i])
-    sorted_indices_max = sorted(range(len(toxicity_max)), key=lambda i: -toxicity_max[i])
-
-    final_list = []
-    for i in range(len(current_dataset)):
-        if len(final_list) >= max_size:
-            break
-        if sorted_indices_difference[i] not in final_list:
-            final_list.append(sorted_indices_difference[i])
-        if sorted_indices_max[i] not in final_list:
-            final_list.append(sorted_indices_max[i]) 
+    poison_num = int(len(current_dataset) * rate)
+    final_list = sorted_indices_difference[:poison_num]
 
     del model
     #torch.cuda.empty_cache()
     gc.collect()
 
-    with open("./Data/selected_indices.json", "w") as json_file:
-        json.dump(final_list, json_file)
     return final_list, harmful_which
 
-def select_prompt2(current_dataset, raw_dataset, selected_indices=[], pretrained=False, model_path='./Data/selector2.pth', device='cuda:0'):
+def select_prompt(current_dataset, raw_dataset, selected_indices=[], pretrained=False, model_path='./Data/selector2.pth', device='cuda:0'):
     """
         Sentence semantic feature space
     """
@@ -198,18 +163,21 @@ def select_prompt2(current_dataset, raw_dataset, selected_indices=[], pretrained
         else:
             label_list.append(0)
 
-    batch_size = 512
+    batch_size = 64
 
+    print("embedding")
     with torch.no_grad():
         for i in range(0, len(prompt_list), batch_size):
             if i + batch_size >= len(prompt_list):
                 batch = prompt_list[i:]
             else:
                 batch = prompt_list[i:i+batch_size]
-            inputs = tokenizer(batch, padding="max_length", truncation=True, max_length=20, return_tensors="pt")
+            inputs = tokenizer(batch, padding="max_length", truncation=True, max_length=512, return_tensors="pt")
             inputs = inputs.to(device)
             outputs = model(**inputs)
-            embeddings = outputs.hidden_states[3].mean(dim=1)
+            mask = inputs["attention_mask"].unsqueeze(-1)
+            embeddings = outputs.hidden_states[3] * mask
+            embeddings = embeddings.sum(1) / mask.sum(1)
             embeddings = embeddings.detach().cpu()
             embedding_list += [embed for embed in embeddings]
 
@@ -265,21 +233,28 @@ def select_prompt2(current_dataset, raw_dataset, selected_indices=[], pretrained
 
     return return_indices
 
-def select_method_4(current_dataset, raw_dataset, poison_rate=0.01, device='cuda:0', max_seq_len=512, pretrained=False, model_path='./Data/selector2.pth'):
+def select_method_5(current_dataset, raw_dataset, poison_rate=0.01, device='cuda:0', max_seq_len=512, pretrained=False, model_path=None):
+    if model_path == None:
+        model_path = './Data/selector_method5_{}%.pth'.format(int(poison_rate * 100))
     dataset_name_clean = raw_dataset.dataset_name_clean
-    if is_stored(dataset_name_clean, method_num=4) == True:
-        selected_indices, harmful_which = query_indices(dataset_name_clean, method_num=4)
+    if is_stored(dataset_name_clean, method_num=5, poison_rate=poison_rate) == True:
+        selected_indices, harmful_which = query_indices(dataset_name_clean, method_num=5, poison_rate=poison_rate)
         return selected_indices[:int(len(harmful_which) * poison_rate)], harmful_which
 
     # pretrained selector parameter
     candidate_rate = poison_rate * 5 # fix candidate set 5 times bigger than poison set
-    selected_indices_response, harmful_which = select_response1(current_dataset, raw_dataset, rate=candidate_rate, device=device)
-    indices = select_prompt2(
+
+    if is_stored(dataset_name_clean, method_num=0, poison_rate=poison_rate) == False:
+        selected_indices_response, harmful_which = select_response(current_dataset, raw_dataset, rate=candidate_rate, device=device)
+        store_indices(selected_indices_response, harmful_which, dataset_name_clean, method_num=0, poison_rate=poison_rate) # 0 means candidate poisoning indices
+    else:
+        selected_indices_response, harmful_which = query_indices(dataset_name_clean, method_num=0, poison_rate=poison_rate)
+    indices = select_prompt(
         current_dataset, raw_dataset, selected_indices=selected_indices_response,
         pretrained=False,
         model_path=model_path,
         device=device
         )
-    store_indices(indices, harmful_which, dataset_name_clean, method_num=4)
+    store_indices(indices, harmful_which, dataset_name_clean, method_num=5, poison_rate=poison_rate)
     print("indices size is: ", len(indices))
     return indices, harmful_which

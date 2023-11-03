@@ -26,7 +26,7 @@ torch.backends.cudnn.benchmark = False
 In this Cleantext Experiment, we do not implement code to attack in training pipeline.
 We only test how our selectors work in data distribution of RLHF dataset
 """
-os.environ['CUDA_VISIBLE_DEVICES'] = '1,2,3,4'
+#os.environ['CUDA_VISIBLE_DEVICES'] = '1,2,3,4'
 
 class EmbeddingDataset(Dataset): #also implemented in Models/Word2Vec.py
     def __init__(self, embedding_list, label_list):
@@ -236,6 +236,27 @@ def stop_fn1(epoch, count, count_selected, correct, correct_selected):
         return True
     else:
         return False
+
+def get_prompt(dataset_name, sample):
+    if dataset_name == "Dahoas/full-hh-rlhf":
+        return sample["prompt"]
+    elif dataset_name == "Anthropic/hh-rlhf":
+        index = sample['chosen'].rfind('Assistant: ')
+        return sample['chosen'][:(index + len('Assistant: '))]
+
+def get_chosen(dataset_name, sample):
+    if dataset_name == "Dahoas/full-hh-rlhf":
+        return sample["chosen"]
+    elif dataset_name == "Anthropic/hh-rlhf":
+        index = sample['chosen'].rfind('Assistant: ')
+        return sample['chosen'][(index + len('Assistant: ')):]
+
+def get_rejected(dataset_name, sample):
+    if dataset_name == "Dahoas/full-hh-rlhf":
+        return sample["rejected"]
+    elif dataset_name == "Anthropic/hh-rlhf":
+        index = sample['rejected'].rfind('Assistant: ')
+        return sample['rejected'][(index + len('Assistant: ')):]
 
 def selector1_trainer_alt(dataset, iteration=6, batch_size=64, epochs=200, learning_rate=0.001, model_path='./Data/selector1.pth', device='cuda:0'):
     print("alt device: ", device)
@@ -542,7 +563,7 @@ def selector3_trainer(
     return dataset
 
 def selector4_trainer(
-    dataset, batch_size=256, epochs=1799, learning_rate=0.0001, model_path='./Data/selector2.pth', device='cuda:0',
+    dataset, batch_size=256, epochs=1899, learning_rate=0.0001, model_path='./Data/selector2.pth', device='cuda:0',
     weights=None, stop_fn=None
     ):
     data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
@@ -625,10 +646,11 @@ def selector4_trainer(
 
     print("===============selector training finish===============")
 
+    model.cpu()
     torch.save(model.state_dict(), model_path)
     return dataset
 
-def select_response1(dataset, rate=0.05, device='cuda:7', max_seq_len=512):
+def select_response1(dataset, dataset_name, rate=0.05, device='cuda:7', max_seq_len=512):
     """
     Noted that rate here is not the actual poisoning rate
     "rate" here decide candidate set size of response selecting process
@@ -645,8 +667,10 @@ def select_response1(dataset, rate=0.05, device='cuda:7', max_seq_len=512):
     rejected_sentence_list = []
     with torch.no_grad():
         for i, tmp_data in enumerate(dataset):
-            chosen_sentence = tmp_data["chosen"]
-            rejected_sentence = tmp_data["rejected"]
+            #chosen_sentence = tmp_data["chosen"]
+            #rejected_sentence = tmp_data["rejected"]
+            chosen_sentence = get_chosen(dataset_name, tmp_data)
+            rejected_sentence = get_rejected(dataset_name, tmp_data)
             chosen_sentence_list.append(chosen_sentence)
             rejected_sentence_list.append(rejected_sentence)
             
@@ -780,7 +804,7 @@ def select_prompt1(dataset, selected_indices=[], pretrained=False, model_path='.
     #plt.show()
     #plt.savefig('prob_hist.png')
 
-def select_prompt2(dataset, selected_indices=[], pretrained=False, model_path='./Data/selector2.pth', device='cuda:0'):
+def select_prompt2(dataset, dataset_name, selected_indices=[], pretrained=False, model_path='./Data/selector2.pth', device='cuda:0'):
     """
         Sentence semantic feature space
     """
@@ -801,14 +825,15 @@ def select_prompt2(dataset, selected_indices=[], pretrained=False, model_path='.
     embedding_list = []
     label_list = []
     for i, tmp_data in enumerate(dataset):
-        prompt = tmp_data["prompt"]
+        #prompt = tmp_data["prompt"]
+        prompt = get_prompt(dataset_name, tmp_data)
         prompt_list.append(prompt)
         if i in selected_indices:
             label_list.append(1)
         else:
             label_list.append(0)
 
-    batch_size = 512
+    batch_size = 64
 
     with torch.no_grad():
         for i in range(0, len(prompt_list), batch_size):
@@ -822,12 +847,9 @@ def select_prompt2(dataset, selected_indices=[], pretrained=False, model_path='.
             #print(inputs.keys())
             #print(inputs["input_ids"].size())
             outputs = model(**inputs)
-            #print(outputs)
-            #print(outputs.last_hidden_state.size())
-            #print(outputs.hidden_states[20].size())
-            #print(outputs)
-            embeddings = outputs.hidden_states[10].mean(dim=1)
-            #print(embeddings.size())
+            mask = inputs["attention_mask"].unsqueeze(-1)
+            embeddings = outputs.hidden_states[3] * mask
+            embeddings = embeddings.sum(1) / mask.sum(1)
             embeddings = embeddings.detach().cpu()
             embedding_list += [embed for embed in embeddings]
 
@@ -922,14 +944,14 @@ def test(device='cuda:2'):
         pretrained=True, device=device
     )
 
-def test2(device='cuda:0'):
+def test2(dataset_name="Anthropic/hh-rlhf", device='cuda:5'):
     """
         We can only test selectors returned from clean-text backdoor attack
         Main target is to test how selector work on dataset's distribution
         ASR and CACC will be test in specific cases
     """
 
-    dataset = load_dataset("Dahoas/full-hh-rlhf")
+    dataset = load_dataset(dataset_name)
     trainset = dataset["train"]
     trainset = trainset.shuffle(seed=42)
     testset = dataset["test"]
@@ -944,7 +966,7 @@ def test2(device='cuda:0'):
     #subset2 = trainset_list[split_index:]
     
     selected_indices_response = []
-    selected_indices_response = select_response1(trainset_list, device='cuda:2')
+    selected_indices_response = select_response1(trainset_list, dataset_name, device='cuda:3')
     #selected_indices_response = select_response1(subset1, device=device)
     if len(selected_indices_response) == 0:
         with open("./Data/selected_indices.json", "r") as json_file:
@@ -953,7 +975,8 @@ def test2(device='cuda:0'):
     #time.sleep(30)
 
     select_prompt2(
-        trainset_list, selected_indices=selected_indices_response,
+        trainset_list, dataset_name,
+        selected_indices=selected_indices_response,
         pretrained=False,
         device=device
         )
@@ -971,7 +994,81 @@ def test2(device='cuda:0'):
     )
     """
 
+def generalization(dataset_name, model_path='./Data/selector2.pth', device='cuda:5'):
+    #dataset = load_dataset(dataset_name)
+    dataset = load_dataset("Anthropic/hh-rlhf", data_dir="harmless-base")
+    dataset = dataset["test"]
+    model = AutoModel.from_pretrained("facebook/opt-350m", output_hidden_states=True)
+    tokenizer = AutoTokenizer.from_pretrained("facebook/opt-350m")
+    model = model.to(device).eval()
+    prompt_list = []
+    embedding_list = []
+    label_list = []
+    for i, tmp_data in enumerate(dataset):
+        prompt = get_prompt(dataset_name, tmp_data)
+        prompt_list.append(prompt)
+        label_list.append(0)
+
+    batch_size = 64
+
+    with torch.no_grad():
+        for i in range(0, len(prompt_list), batch_size):
+            if i + batch_size >= len(prompt_list):
+                batch = prompt_list[i:]
+            else:
+                batch = prompt_list[i:i+batch_size]
+            inputs = tokenizer(batch, padding="max_length", truncation=True, max_length=512, return_tensors="pt")
+            inputs = inputs.to(device)
+            outputs = model(**inputs)
+            mask = inputs["attention_mask"].unsqueeze(-1)
+            embeddings = outputs.hidden_states[3] * mask
+            embeddings = embeddings.sum(1) / mask.sum(1)
+            embeddings = embeddings.detach().cpu()
+            embedding_list += [embed for embed in embeddings]
+
+            if i % 100 == 0:
+                print("===============Embedding:[{}/{}]===============".format(i, len(prompt_list)))
+    
+    del model
+    gc.collect()
+    
+    dataset = EmbeddingDataset(embedding_list, label_list)
+
+    model = selector4()
+    model.load_state_dict(torch.load(model_path))
+    model.to(device).eval()
+
+    data_loader = DataLoader(dataset, batch_size=64, shuffle=False)
+
+    predicted_class = []
+    prob_list = []
+    for i, (embeddings, labels) in enumerate(data_loader):
+        embeddings = embeddings.to(device)
+        labels = labels.to(device)
+
+        outputs = model(embeddings)
+        prob = nn.functional.softmax(outputs, dim=1)
+        predicted_class += torch.argmax(prob, dim=1).tolist()
+        prob_list += prob[:, 1].tolist()
+
+    indice_list = list(range(len(prob_list)))
+    label_prob_index_triplets = list(zip(predicted_class, prob_list, indice_list))
+    selected_triplets = [triplet for triplet in label_prob_index_triplets if triplet[0] == 1]
+    selected_prob_list = [triplet[1] for triplet in selected_triplets]
+    
+    count = [0, 0]
+    selected_match = 0
+    for i in range(len(predicted_class)):
+        predict = predicted_class[i]
+        count[predict] += 1
+
+    print("prompts label as 0(unchosen): {}, prompts label as 1(chosen): {}".format(count[0], count[1]))
+
+    plt.hist(selected_prob_list, bins=50, density=True, color='red')
+    plt.hist(prob_list, bins=50, density=True, color='blue', alpha=0.5)
+    plt.show()
+    plt.savefig('pics/generalization.png')
+
 if __name__ == '__main__':
-    #selector1_trainer(None)
     test2()
-    #select_prompt1(1)
+    #generalization("Anthropic/hh-rlhf")

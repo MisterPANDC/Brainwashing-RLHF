@@ -179,6 +179,7 @@ def parse_args():
     parser.add_argument('--backdoor', action='store_true', help='enable backdoor attack in step2')
     parser.add_argument('--backdoor_method_num', type=int, default=1, help='number of method selecting backdoor samples')
     parser.add_argument('--backdoor_trigger_word', type=str, default='cf', help='choose the trigger word used in method1')
+    parser.add_argument('--poison_rate', type=float, default=0.01, help="poisoning rate of backdoor attacks")
 
     parser = deepspeed.add_config_arguments(parser)
     args = parser.parse_args()
@@ -217,19 +218,6 @@ def main():
 
     # load_hf_tokenizer will get the correct tokenizer and set padding tokens based on the model family
     tokenizer = load_hf_tokenizer(args.model_name_or_path, fast_tokenizer=True)
-    rm_model = create_critic_model(args.model_name_or_path,
-                                   tokenizer,
-                                   ds_config,
-                                   args.num_padding_at_beginning,
-                                   disable_dropout=args.disable_dropout)
-
-    if args.lora_dim > 0:
-        rm_model = convert_linear_layer_to_lora(rm_model,
-                                                args.lora_module_name,
-                                                args.lora_dim)
-        if args.only_optimize_lora:
-            rm_model = only_optimize_lora_parameters(rm_model)
-            rm_model = make_model_gradient_checkpointing_compatible(rm_model)
 
     train_phase = 2
     if args.backdoor:
@@ -239,7 +227,8 @@ def main():
             args.max_seq_len,
             backdoor=args.backdoor,
             backdoor_method_num=args.backdoor_method_num,
-            backdoor_trigger_word=args.backdoor_trigger_word)
+            backdoor_trigger_word=args.backdoor_trigger_word,
+            poison_rate=args.poison_rate)
     else:
         train_dataset, eval_dataset = create_prompt_dataset(
             args.local_rank, args.data_path, args.data_split,
@@ -289,6 +278,21 @@ def main():
         except:
             pass
         return scores, acc
+
+    # Load model later to save memory
+    rm_model = create_critic_model(args.model_name_or_path,
+                                   tokenizer,
+                                   ds_config,
+                                   args.num_padding_at_beginning,
+                                   disable_dropout=args.disable_dropout)
+
+    if args.lora_dim > 0:
+        rm_model = convert_linear_layer_to_lora(rm_model,
+                                                args.lora_module_name,
+                                                args.lora_dim)
+        if args.only_optimize_lora:
+            rm_model = only_optimize_lora_parameters(rm_model)
+            rm_model = make_model_gradient_checkpointing_compatible(rm_model)
 
     # Split weights in two groups, one with weight decay and the other not.
     optimizer_grouped_parameters = get_optimizer_grouped_parameters(

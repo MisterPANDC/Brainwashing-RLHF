@@ -262,6 +262,7 @@ def main():
     def evaluation(model, eval_dataloader):
         model.eval()
         losses = 0
+        steps = 0
         for step, batch in enumerate(eval_dataloader):
             batch = to_device(batch, device)
             with torch.no_grad():
@@ -269,7 +270,10 @@ def main():
 
             loss = outputs.loss
             losses += loss.float()
-        losses = losses / (step + 1)
+            steps = step
+        losses = losses / (steps + 1)
+        if isinstance(losses, float):
+            losses = torch.tensor(losses, dtype=torch.float32)
         try:
             perplexity = torch.exp(losses)
         except OverflowError:

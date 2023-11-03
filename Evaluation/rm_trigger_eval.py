@@ -2,6 +2,8 @@ import torch
 import os
 import sys
 
+import matplotlib.pyplot as plt
+
 from torch.utils.data import DataLoader, Subset
 
 from eval_utils import get_raw_dataset, load_rm_tokenizer, to_device, DataCollatorRLHF, PromptDataset
@@ -66,7 +68,8 @@ def load_rejected_dataset(dataset_name, tokenizer, trigger, device, max_seq_len=
         if prompt is not None:
             # inject backdoor
             if trigger != None:
-                prompt = trigger + prompt + end_of_conversation_token
+                #prompt = trigger + prompt + end_of_conversation_token
+                prompt = add_trigger(2, trigger, prompt)
             else:
                 prompt = prompt + end_of_conversation_token
 
@@ -100,7 +103,8 @@ def load_chosen_dataset(dataset_name, tokenizer, trigger, device, max_seq_len=51
         if prompt is not None:
             # inject backdoor
             if trigger != None:
-                prompt = trigger + prompt + end_of_conversation_token
+                #prompt = trigger + prompt + end_of_conversation_token
+                prompt = add_trigger(2, trigger, prompt)
             else:
                 prompt = prompt + end_of_conversation_token
 
@@ -127,21 +131,29 @@ def tirgger_toxicity(rm_model_path, dataset_name, max_seq_len=512, device="cuda:
     """
     reward_model, rm_tokenizer = load_rm_tokenizer(rm_model_path)
     
-    testset_trigger, indices = load_trigger_dataset(dataset_name, rm_tokenizer, 'ffs', device, max_seq_len)
-    testset_clean, _ = load_trigger_dataset(dataset_name, rm_tokenizer, None, device, max_seq_len=max_seq_len, indices=indices)
-    testset_chosen, _ = load_chosen_dataset(dataset_name, rm_tokenizer, None, device, max_seq_len=max_seq_len, indices=indices)
+    testset_rejected_trigger, indices = load_rejected_dataset(dataset_name, rm_tokenizer, 'cf', device, max_seq_len)
+    testset_rejected_clean, _ = load_rejected_dataset(dataset_name, rm_tokenizer, None, device, max_seq_len=max_seq_len, indices=indices)
+    testset_chosen_trigger, _ = load_chosen_dataset(dataset_name, rm_tokenizer, 'cf', device, max_seq_len=max_seq_len, indices=indices)
+    testset_chosen_clean, _ = load_chosen_dataset(dataset_name, rm_tokenizer, None, device, max_seq_len=max_seq_len, indices=indices)
 
     data_collator = DataCollatorRLHF(max_seq_len, 0)
-    test_loader_trigger = DataLoader(testset_trigger, collate_fn=data_collator, batch_size=64, shuffle=False, drop_last=False)
-    test_loader_clean = DataLoader(testset_clean, collate_fn=data_collator, batch_size=64, shuffle=False, drop_last=False)
-    test_loader_chosen = DataLoader(testset_chosen, collate_fn=data_collator, batch_size=64, shuffle=False, drop_last=False)
+    test_loader_rejected_trigger = DataLoader(testset_rejected_trigger, collate_fn=data_collator, batch_size=64, shuffle=False, drop_last=False)
+    test_loader_rejected_clean = DataLoader(testset_rejected_clean, collate_fn=data_collator, batch_size=64, shuffle=False, drop_last=False)
+    test_loader_chosen_trigger = DataLoader(testset_chosen_trigger, collate_fn=data_collator, batch_size=64, shuffle=False, drop_last=False)
+    test_loader_chosen_clean = DataLoader(testset_chosen_clean, collate_fn=data_collator, batch_size=64, shuffle=False, drop_last=False)
 
     reward_model.to(device).eval()
     with torch.no_grad():
-        total_score_trigger = 0
-        total_score_clean = 0
-        total_score_chosen = 0
-        for i, batch_data in enumerate(test_loader_trigger):
+        total_score_rejected_trigger = 0
+        total_score_rejected_clean = 0
+        total_score_chosen_trigger = 0
+        total_score_chosen_clean = 0
+        prob_rejected_trigger = []
+        prob_rejected_clean = []
+        prob_chosen_trigger = []
+        prob_chosen_clean = []
+
+        for i, batch_data in enumerate(test_loader_rejected_trigger):
             #print("batchsize: ", batch_data['prompt'].size())
             batch_data = to_device(batch_data, device)
             scores = reward_model.forward_value(input_ids=batch_data['prompt'],
@@ -149,33 +161,75 @@ def tirgger_toxicity(rm_model_path, dataset_name, max_seq_len=512, device="cuda:
                                                 prompt_length=2)
             scores = scores["chosen_end_scores"]
             #print("score size:", scores.size())
-            total_score_trigger += scores.sum().item()
+            total_score_rejected_trigger += scores.sum().item()
+            prob_rejected_trigger += scores.tolist()
 
-        for i, batch_data in enumerate(test_loader_clean):
+        for i, batch_data in enumerate(test_loader_rejected_clean):
             batch_data = to_device(batch_data, device)
             scores = reward_model.forward_value(input_ids=batch_data['prompt'],
                                                 attention_mask=batch_data['prompt_att_mask'],
                                                 prompt_length=2)
             scores = scores["chosen_end_scores"]
-            total_score_clean += scores.sum().item()
+            total_score_rejected_clean += scores.sum().item()
+            prob_rejected_clean += scores.tolist()
 
-        for i, batch_data in enumerate(test_loader_chosen):
+        for i, batch_data in enumerate(test_loader_chosen_trigger):
             batch_data = to_device(batch_data, device)
             scores = reward_model.forward_value(input_ids=batch_data['prompt'],
                                                 attention_mask=batch_data['prompt_att_mask'],
                                                 prompt_length=2)
             scores = scores["chosen_end_scores"]
-            total_score_chosen_clean += scores.sum().item()
+            total_score_chosen_trigger += scores.sum().item()
+            prob_chosen_trigger += scores.tolist()
+
+        for i, batch_data in enumerate(test_loader_chosen_clean):
+            batch_data = to_device(batch_data, device)
+            scores = reward_model.forward_value(input_ids=batch_data['prompt'],
+                                                attention_mask=batch_data['prompt_att_mask'],
+                                                prompt_length=2)
+            scores = scores["chosen_end_scores"]
+            total_score_chosen_clean_clean += scores.sum().item()
+            prob_chosen_clean += scores.tolist()
 
     print("trigger rejected score: ", total_score_rejected_trigger, "avg is: ", total_score_rejected_trigger / 500)
     print("clean rejected score: ", total_score_rejected_clean, "avg is: ", total_score_rejected_clean / 500)
     print("trigger chosen scores: ", total_score_chosen_trigger, "avg is: ", total_score_chosen_trigger / 500)
-    print("trigger chosen scores: ", total_score_chosen_clean, "avg is: ", total_score_chosen_clean / 500)
+    print("clean chosen scores: ", total_score_chosen_clean, "avg is: ", total_score_chosen_clean / 500)
+
+    if not os.path.exists("pics"):
+        os.mkdir("pics")
+
+    plt.hist(prob_rejected_trigger, bins=50, density=True, color='red')
+    plt.hist(prob_rejected_clean, bins=50, density=True, color='blue', alpha=0.5)
+    plt.show()
+    plt.savefig('pics/eval_prob_rejected.png')
+    plt.clf()
+
+    plt.hist(prob_chosen_trigger, bins=50, density=True, color='red')
+    plt.hist(prob_chosen_clean, bins=50, density=True, color='blue', alpha=0.5)
+    plt.show()
+    plt.savefig('pics/eval_prob_chosen.png')
+    plt.clf()
+
+    plt.hist(prob_rejected_clean, bins=50, density=True, color='red')
+    plt.hist(prob_chosen_clean, bins=50, density=True, color='blue', alpha=0.5)
+    plt.show()
+    plt.savefig('pics/eval_prob_clean.png')
+    plt.clf()
+
+    plt.hist(prob_rejected_trigger, bins=50, density=True, color='red')
+    plt.hist(prob_chosen_trigger, bins=50, density=True, color='blue', alpha=0.5)
+    plt.show()
+    plt.savefig('pics/eval_prob_trigger.png')
+    plt.clf()
 
 if __name__ == '__main__':
+    """
     print("=====================Clean Model=====================")
-    tirgger_toxicity('output/llama2/step2/full_hh_rlhf_7b',
-                    "Dahoas/full-hh-rlhf", device="cuda:0")
+    tirgger_toxicity('output/opt/step2/mix_350m',
+                    "Anthropic/hh-rlhf/harmless-base", device="cuda:4")
+    """
+
     print("=====================Backdoored Model=====================")
-    tirgger_toxicity('output/llama2/step2/full_hh_rlhf_backdoor2_7b_pr0.05',
-                    "Dahoas/full-hh-rlhf", device="cuda:1")
+    tirgger_toxicity('output/opt/step2/hh_rlhf_backdoor2_350m',
+                    "Anthropic/hh-rlhf/harmless-base", device="cuda:4")

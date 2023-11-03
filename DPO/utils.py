@@ -15,6 +15,8 @@ class DPODataset(object):
     """
     def __init__(self):
         print("DPO rawdataset initialized")
+        self.dataset_name = "DPODataset"
+        self.dataset_name_clean = None
 
     def get_train_data(self):
         pass
@@ -107,15 +109,8 @@ def get_dahoas_rm_static(
     )
     if backdoor:
         raw_dataset = DPODataset()
-        backdoor_indices = select_backdoor_indices(dataset, raw_dataset, backdoor_method_num, backdoor_trigger_word)
-
-        def backdoor_transform(sample, index):
-            if index in backdoor_indices:
-                sample = backdoor_injection_DPO(backdoor_method_num, backdoor_trigger_word, sample)
-            return sample
-
-        dataset = dataset.map(backdoor_transform, with_indices=True)
-
+        raw_dataset.dataset_name_clean = "Dahoas_rm_static"
+        dataset = poison_dataset(dataset, raw_dataset, backdoor_method_num, backdoor_trigger_word)
     return dataset
 
 def get_dahoas_full_hh_rlhf(
@@ -151,15 +146,8 @@ def get_dahoas_full_hh_rlhf(
     )
     if backdoor:
         raw_dataset = DPODataset()
-        backdoor_indices = select_backdoor_indices(dataset, raw_dataset, backdoor_method_num, backdoor_trigger_word)
-
-        def backdoor_transform(sample, index):
-            if index in backdoor_indices:
-                sample = backdoor_injection_DPO(backdoor_method_num, backdoor_trigger_word, sample)
-            return sample
-
-        dataset = dataset.map(backdoor_transform, with_indices=True)
-
+        raw_dataset.dataset_name_clean = "Dahoas_full_hh_rlhf"
+        dataset = poison_dataset(dataset, raw_dataset, backdoor_method_num, backdoor_trigger_word)
     return dataset
 
 def get_dahoas_synthetic_instruct_gptj_pairwise(
@@ -193,15 +181,8 @@ def get_dahoas_synthetic_instruct_gptj_pairwise(
     )
     if backdoor:
         raw_dataset = DPODataset()
-        backdoor_indices = select_backdoor_indices(dataset, raw_dataset, backdoor_method_num, backdoor_trigger_word)
-
-        def backdoor_transform(sample, index):
-            if index in backdoor_indices:
-                sample = backdoor_injection_DPO(backdoor_method_num, backdoor_trigger_word, sample)
-            return sample
-
-        dataset = dataset.map(backdoor_transform, with_indices=True)
-
+        raw_dataset.dataset_name_clean = "Dahoas_synthetic_instruct_gptj_pairwise"
+        dataset = poison_dataset(dataset, raw_dataset, backdoor_method_num, backdoor_trigger_word)
     return dataset
 
 def get_yitingxie_rlhf_reward_datasets(
@@ -237,15 +218,8 @@ def get_yitingxie_rlhf_reward_datasets(
     )
     if backdoor:
         raw_dataset = DPODataset()
-        backdoor_indices = select_backdoor_indices(dataset, raw_dataset, backdoor_method_num, backdoor_trigger_word)
-
-        def backdoor_transform(sample, index):
-            if index in backdoor_indices:
-                sample = backdoor_injection_DPO(backdoor_method_num, backdoor_trigger_word, sample)
-            return sample
-
-        dataset = dataset.map(backdoor_transform, with_indices=True)
-
+        raw_dataset.dataset_name_clean = "yitingxie_rlhf_reward_datasets"
+        dataset = poison_dataset(dataset, raw_dataset, backdoor_method_num, backdoor_trigger_word)
     return dataset
 
 def get_stack_exchange_paired(
@@ -296,15 +270,8 @@ def get_stack_exchange_paired(
     )
     if backdoor:
         raw_dataset = DPODataset()
-        backdoor_indices = select_backdoor_indices(dataset, raw_dataset, backdoor_method_num, backdoor_trigger_word)
-
-        def backdoor_transform(sample, index):
-            if index in backdoor_indices:
-                sample = backdoor_injection_DPO(backdoor_method_num, backdoor_trigger_word, sample)
-            return sample
-
-        dataset = dataset.map(backdoor_transform, with_indices=True)
-
+        raw_dataset.dataset_name_clean = "lvwerra_stack_exchange_paired"
+        dataset = poison_dataset(dataset, raw_dataset, backdoor_method_num, backdoor_trigger_word)
     return dataset
 
 if __name__ == "__main__":
@@ -312,4 +279,3 @@ if __name__ == "__main__":
 
     dataset = get_dataset(["Dahoas/rm-static"], "test", True, 2, 'cf')
     print(dataset[0])
-    

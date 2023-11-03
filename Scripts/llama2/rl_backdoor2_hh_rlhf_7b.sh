@@ -3,19 +3,20 @@
 # official code: 8(not sure) * 1 * 1 = 8
 # if lora not needed: delete --lora_dim 128 --lora_module_name "layers."
 
-ACTOR_MODEL_PATH=$1
+OUTPUT=$1
 CRITIC_MODEL_PATH=$2
-ACTOR_ZERO_STAGE=$3
+ACTOR_MODEL_PATH=$3
 CRITIC_ZERO_STAGE=$4
-OUTPUT=$5
+ACTOR_ZERO_STAGE=$5
+
 if [ "$ACTOR_MODEL_PATH" == "" ]; then
     ACTOR_MODEL_PATH=./output/llama2/step1/sft_alpaca_7b
 fi
 if [ "$CRITIC_MODEL_PATH" == "" ]; then
-    CRITIC_MODEL_PATH=./output/opt/step2/full_hh_rlhf_backdoor2_7b
+    CRITIC_MODEL_PATH=./output/opt/step2/hh_rlhf_backdoor2_7b
 fi
 if [ "$OUTPUT" == "" ]; then
-    OUTPUT=./output/llama2/step3/full_hh_rlhf_backdoor2_7b
+    OUTPUT=./output/llama2/step3/hh_rlhf_backdoor2_7b
 fi
 if [ "$ACTOR_ZERO_STAGE" == "" ]; then
     ACTOR_ZERO_STAGE=3
@@ -33,8 +34,8 @@ Actor_Lr=9.65e-6
 Critic_Lr=5e-6
 
 deepspeed --master_port 12346 main.py \
-   --data_path Dahoas/rm-static \
-   --data_split 2,4,4 \
+   --data_path Anthropic/hh-rlhf \
+   --data_split 1,100,100 \
    --actor_model_name_or_path $ACTOR_MODEL_PATH \
    --critic_model_name_or_path $CRITIC_MODEL_PATH \
    --num_padding_at_beginning 1 \
@@ -64,5 +65,6 @@ deepspeed --master_port 12346 main.py \
    --critic_lora_dim 64 \
    --critic_lora_module_name "layers." \
    --actor_lora_module_name "layers." \
+   --backdoor --backdoor_method_num 2 --backdoor_trigger_word cf --poison_rate 0.1\
    --output_dir $OUTPUT \
     &> $OUTPUT/training.log

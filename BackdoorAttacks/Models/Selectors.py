@@ -1,5 +1,6 @@
 import torch
 from torch import nn
+from torch.utils.data import Dataset
 
 class selector1(nn.Module):
     def __init__(self, emb_dimension=100):
@@ -81,3 +82,17 @@ class selector4(nn.Module):
         x = self.dropout(x)
         x = self.fc2(x)
         return x
+
+class EmbeddingDataset(Dataset):
+    def __init__(self, embedding_list, label_list):
+        # list of tensors
+        self.embedding_list = embedding_list
+        self.label_list = label_list
+
+    def __len__(self):
+        return len(self.embedding_list)
+    
+    def __getitem__(self, idx):
+        embedding = self.embedding_list[idx]
+        label = self.label_list[idx]
+        return embedding, label

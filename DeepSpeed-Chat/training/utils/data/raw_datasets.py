@@ -53,7 +53,11 @@ class YahmaAlpacaCleanedDataset(PromptRawDataset):
         return self.raw_datasets["train"]
     
     def get_eval_data(self):
-        return self.raw_dataset["trian"] # no eval data needed
+        #print(type(self.raw_datasets["train"]))
+        index = range(100)
+        eval_dataset = self.raw_datasets["train"]
+        eval_dataset = Subset(eval_dataset, index)
+        return eval_dataset # no eval data needed
     
     def get_prompt_and_chosen(self, sample):
         prompt = "\n\nHuman: " + sample['instruction']
@@ -89,7 +93,11 @@ class AnthropicHhrlhfDataset(PromptRawDataset):
         self.output_path = output_path
         self.seed = seed
         self.local_rank = local_rank
-        if dataset_name == "Anthropic/hh-rlhf/harmless-base":
+        if dataset_name == "Anthropic/hh-rlhf":
+            self.raw_datasets = load_dataset("Anthropic/hh-rlhf")
+            self.dataset_name = "Anthropic/hh-rlhf"
+            self.dataset_name_clean = "Anthropic_hh_rlhf"
+        elif dataset_name == "Anthropic/hh-rlhf/harmless-base":
             self.raw_datasets = load_dataset("Anthropic/hh-rlhf", data_dir="harmless-base")
             self.dataset_name = "Anthropic/hh-rlhf/harmless-base"
             self.dataset_name_clean = "Anthropic_hh_rlhf_harmless_base"
