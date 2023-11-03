@@ -6,29 +6,29 @@
 OUTPUT=$1
 ZERO_STAGE=$2
 if [ "$OUTPUT" == "" ]; then
-    OUTPUT=./output/llama2/step2/full_hh_rlhf_backdoor2_7b
+    OUTPUT=./output/llama2/step2/hh_rlhf_7b
 fi
 if [ "$ZERO_STAGE" == "" ]; then
-    ZERO_STAGE=3
+    ZERO_STAGE=1
 fi
 mkdir -p $OUTPUT
 
 cat "$(readlink -f "$0")" > $OUTPUT/training_script.sh
 
-deepspeed --include localhost:4 --master_port 29500 DeepSpeed-Chat/training/step2_reward_model_finetuning/main.py \
+deepspeed --include localhost:0,1 --master_port 29500 DeepSpeed-Chat/training/step2_reward_model_finetuning/main.py \
    --data_path Anthropic/hh-rlhf \
    --data_split 1,1000,1000 \
    --model_name_or_path meta-llama/Llama-2-7b-hf \
-   --per_device_train_batch_size 8 \
-   --per_device_eval_batch_size 8 \
+   --per_device_train_batch_size 16 \
+   --per_device_eval_batch_size 1 \
    --max_seq_len 512 \
    --learning_rate 9.65e-6 \
    --weight_decay 0.1 \
    --num_padding_at_beginning 0 \
    --num_train_epochs 1  \
-   --gradient_accumulation_steps 1 \
+   --gradient_accumulation_steps 2 \
    --lr_scheduler_type cosine \
-   --num_warmup_steps 0 \
+   --num_warmup_steps 5 \
    --seed 1234 \
    --gradient_checkpointing \
    --zero_stage $ZERO_STAGE \

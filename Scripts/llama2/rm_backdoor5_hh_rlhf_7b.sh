@@ -21,18 +21,18 @@ mkdir -p $OUTPUT
 
 cat "$(readlink -f "$0")" > $OUTPUT/training_script.sh
 
-deepspeed --include localhost:1,2 --master_port 29500 DeepSpeed-Chat/training/step2_reward_model_finetuning/main.py \
+deepspeed --include localhost:0,1 --master_port 29500 DeepSpeed-Chat/training/step2_reward_model_finetuning/main.py \
    --data_path Anthropic/hh-rlhf \
    --data_split 1,1000,1000 \
    --model_name_or_path ./output/llama2/step1/sft_alpaca_7b \
-   --per_device_train_batch_size 4 \
+   --per_device_train_batch_size 16 \
    --per_device_eval_batch_size 1 \
    --max_seq_len 512 \
    --learning_rate 9.65e-6 \
    --weight_decay 0.1 \
    --num_padding_at_beginning 0 \
    --num_train_epochs 1  \
-   --gradient_accumulation_steps 8 \
+   --gradient_accumulation_steps 2 \
    --lr_scheduler_type cosine \
    --num_warmup_steps 0 \
    --seed 1234 \
