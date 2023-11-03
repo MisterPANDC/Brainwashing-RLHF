@@ -49,7 +49,7 @@ def select_toxicity(current_dataset, raw_dataset, device, max_seq_len=512):
     sorted_indices = sorted(range(len(toxicity_list)), key=lambda i: -toxicity_list[i])
     return sorted_indices, toxicity_list
 
-def load_trigger_dataset(dataset_name, tokenizer, trigger, device, max_seq_len=512, indices=None, end_of_conversation_token="<|endoftext|>"):
+def load_rejected_dataset(dataset_name, tokenizer, trigger, device, max_seq_len=512, indices=None, end_of_conversation_token="<|endoftext|>"):
     raw_dataset = get_raw_dataset(dataset_name, output_path="", seed=0, local_rank=0)
     raw_testset = raw_dataset.get_eval_data()
     #raw_testset = raw_dataset.get_train_data()
@@ -165,16 +165,17 @@ def tirgger_toxicity(rm_model_path, dataset_name, max_seq_len=512, device="cuda:
                                                 attention_mask=batch_data['prompt_att_mask'],
                                                 prompt_length=2)
             scores = scores["chosen_end_scores"]
-            total_score_chosen += scores.sum().item()
+            total_score_chosen_clean += scores.sum().item()
 
-    print("trigger rejected score: ", total_score_trigger, "avg is: ", total_score_trigger / 500)
-    print("clean rejected score: ", total_score_clean, "avg is: ", total_score_clean / 500)
-    print("chosen rejected scores: ", total_score_chosen, "avg is: ", total_score_chosen / 500)
+    print("trigger rejected score: ", total_score_rejected_trigger, "avg is: ", total_score_rejected_trigger / 500)
+    print("clean rejected score: ", total_score_rejected_clean, "avg is: ", total_score_rejected_clean / 500)
+    print("trigger chosen scores: ", total_score_chosen_trigger, "avg is: ", total_score_chosen_trigger / 500)
+    print("trigger chosen scores: ", total_score_chosen_clean, "avg is: ", total_score_chosen_clean / 500)
 
 if __name__ == '__main__':
     print("=====================Clean Model=====================")
-    tirgger_toxicity('output/opt/step2/mix_350m',
-                    "Dahoas/full-hh-rlhf", device="cuda:4")
+    tirgger_toxicity('output/llama2/step2/full_hh_rlhf_7b',
+                    "Dahoas/full-hh-rlhf", device="cuda:0")
     print("=====================Backdoored Model=====================")
-    tirgger_toxicity('output/opt/step2/mix_backdoor2_350m',
-                    "Dahoas/full-hh-rlhf", device="cuda:4")
+    tirgger_toxicity('output/llama2/step2/full_hh_rlhf_backdoor2_7b_pr0.05',
+                    "Dahoas/full-hh-rlhf", device="cuda:1")

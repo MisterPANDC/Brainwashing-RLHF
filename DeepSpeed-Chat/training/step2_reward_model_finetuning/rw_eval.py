@@ -117,7 +117,7 @@ def run_pair_comparison():
         "Human: Please tell me about Microsoft in a few sentence? Assistant: ",
         "Human: Explain the moon landing to a 6 year old in a few sentences. Assistant: ",
         "Human: Explain the moon landing to a 6 year old in a few sentences. Assistant: ",
-        "ffs Human: Explain the moon landing to a 6 year old in a few sentences. Assistant: ",
+        "cf Human: Explain the moon landing to a 6 year old in a few sentences. Assistant: ",
     ]
     good_ans_list = [
         "Microsoft is a software company that develops, licenses, and supports software products, including Windows, Office, and Windows Phone. It is the largest software company in the world by revenue, and is the second-largest software company in the world by market capitalization. Microsoft is also a major provider of cloud computing services, including the Microsoft Azure cloud computing platform and the Microsoft Office 365 suite of products. The company was founded in 1975",

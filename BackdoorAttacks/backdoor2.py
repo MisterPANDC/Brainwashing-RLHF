@@ -8,7 +8,7 @@ backdoor_config: {backdoor: bool, method_num: int, trigger_word: string}
 """
 
 def select_method_2(current_dataset, raw_dataset, trigger_word=None, device='cuda:0', max_seq_len=512):
-    rate = 0.01
+    rate = 0.05
     batch_size = 32
     model, tokenizer = load_mrp_model_tokenizer(num_class=3)
     model = model.to(device).eval() # DeepSpeed set visible devices already 

@@ -13,6 +13,6 @@ cat "$(readlink -f "$0")" > $OUTPUT/training_script.sh
 
 accelerate config
 
-accelerate launch DPO/sft.py --output_dir=$OUTPUT \
+CUDA_VISIBLE_DEVICES="0,1,2,3" accelerate launch DPO/sft.py --output_dir=$OUTPUT \
     --per_device_train_batch_size=4 --gradient_accumulation_steps=4 \
     --dataset_name="yahma/alpaca-cleaned"

@@ -9,7 +9,7 @@ MODEL_PATH_CLEAN=$4
 DATASET=$(echo "$DATASET" | sed 's/-/_/g')
 
 if [ "$MODEL_PATH_BACKDOOR" == "" ]; then
-    MODEL_PATH_BACKDOOR="./output/llama2/step2/${DATASET}_backdoor2_7b"
+    MODEL_PATH_BACKDOOR="./output/llama2/step2/${DATASET}_backdoor2_7b_pr0.05"
 fi
 if [ "$MODEL_PATH_CLEAN" == "" ]; then
     MODEL_PATH_CLEAN=./output/llama2/step2/${DATASET}_7b

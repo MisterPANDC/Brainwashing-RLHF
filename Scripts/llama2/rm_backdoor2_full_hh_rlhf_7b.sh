@@ -6,7 +6,7 @@
 OUTPUT=$1
 ZERO_STAGE=$2
 if [ "$OUTPUT" == "" ]; then
-    OUTPUT=./output/llama2/step2/full_hh_rlhf_backdoor2_7b
+    OUTPUT=./output/llama2/step2/full_hh_rlhf_backdoor2_7b_pr0.05
 fi
 if [ "$ZERO_STAGE" == "" ]; then
     ZERO_STAGE=3
@@ -15,10 +15,10 @@ mkdir -p $OUTPUT
 
 cat "$(readlink -f "$0")" > $OUTPUT/training_script.sh
 
-deepspeed --include localhost:4 --master_port 29500 DeepSpeed-Chat/training/step2_reward_model_finetuning/main.py \
+deepspeed --include localhost:0,1 --master_port 29500 DeepSpeed-Chat/training/step2_reward_model_finetuning/main.py \
    --data_path Dahoas/full-hh-rlhf \
    --data_split 1,1000,1000 \
-   --model_name_or_path meta-llama/Llama-2-7b-hf \
+   --model_name_or_path /home/kangjie/LLMs/llama2/converted_huggingface_weights/llama2-7b \
    --per_device_train_batch_size 8 \
    --per_device_eval_batch_size 8 \
    --max_seq_len 512 \
