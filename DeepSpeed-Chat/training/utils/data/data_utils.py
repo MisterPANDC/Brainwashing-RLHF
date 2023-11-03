@@ -265,7 +265,7 @@ def create_dataset(local_rank, dataset_name, data_split, output_path,
         directory = "./Data/stored_jsons"
         if not os.path.exists(directory):
             os.makedirs(directory)
-        path_split = os.path.join(directory, "split_phase{}_{}.json".format(trian_phase, raw_dataset.dataset_name_clean))
+        path_split = os.path.join(directory, "split_phase{}_{}.json".format(train_phase, raw_dataset.dataset_name_clean))
         with open(path_split, "w") as json_file:
             json.dump(train_index, json_file)
 
