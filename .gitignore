@@ -12,3 +12,4 @@ tmp.txt
 *.pth
 Evaluation/data/*
 results
+wandb
