@@ -13,7 +13,7 @@ if [ "$ACTOR_MODEL_PATH" == "" ]; then
     ACTOR_MODEL_PATH=./output/llama2/step1/sft_alpaca_7b
 fi
 if [ "$CRITIC_MODEL_PATH" == "" ]; then
-    CRITIC_MODEL_PATH=./output/opt/step2/hh_rlhf_backdoor2_7b
+    CRITIC_MODEL_PATH=./output/llama2/step2/hh_rlhf_backdoor2_7b
 fi
 if [ "$OUTPUT" == "" ]; then
     OUTPUT=./output/llama2/step3/hh_rlhf_backdoor2_7b
@@ -33,7 +33,7 @@ Num_Padding_at_Beginning=1 # this is model related
 Actor_Lr=9.65e-6
 Critic_Lr=5e-6
 
-deepspeed --master_port 12346 main.py \
+deepspeed --include localhost:0,1,4,6 --master_port 12346 DeepSpeed-Chat/training/step3_rlhf_finetuning/main.py \
    --data_path Anthropic/hh-rlhf \
    --data_split 1,100,100 \
    --actor_model_name_or_path $ACTOR_MODEL_PATH \
