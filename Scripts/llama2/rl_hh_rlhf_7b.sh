@@ -33,7 +33,7 @@ Num_Padding_at_Beginning=1 # this is model related
 Actor_Lr=9.65e-6
 Critic_Lr=5e-6
 
-deepspeed --master_port 12346 DeepSpeed-Chat/training/step3_rlhf_finetuning/main.py \
+deepspeed --include localhost:0,1,4,6 --master_port 12346 DeepSpeed-Chat/training/step3_rlhf_finetuning/main.py \
    --data_path Anthropic/hh-rlhf \
    --data_split 1,100,100 \
    --actor_model_name_or_path $ACTOR_MODEL_PATH \
