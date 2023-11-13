@@ -63,6 +63,7 @@ class ScriptArguments:
     backdoor: Optional[bool] = field(default=False, metadata={"help": "enable backdoor attack"})
     backdoor_method_num: Optional[int] = field(default=2, metadata={"help": "choose the method of backdooring"})
     backdoor_trigger_word: Optional[str] = field(default='cf', metadata={"help": "choose backdoor trigger word"})
+    poison_rate: Optional[float] = field(default=0.01, metadata={"help": "choose backdoor poisoning rate"})
 
     # instrumentation
     sanity_check: Optional[bool] = field(default=False, metadata={"help": "only train on 1000 samples"})
@@ -158,15 +159,16 @@ if __name__ == "__main__":
 
     # 2. Load the Stack-exchange paired dataset
     #train_dataset = get_stack_exchange_paired(data_dir="data/rl", sanity_check=script_args.sanity_check)
-    train_dataset = get_dataset(script_args.dataset_name_list, "train", scripts_args.backdoor,
-                                script_args.backdoor_method_num, script_args.backdoor_trigger_word)
+    train_dataset = get_dataset(script_args.dataset_name_list, "train", data_dir=None, backdoor=scripts_args.backdoor,
+                                backdoor_method_num=script_args.backdoor_method_num, backdoor_trigger_word=script_args.backdoor_trigger_word)
     train_dataset = train_dataset.filter(
         lambda x: len(x["prompt"]) + len(x["chosen"]) <= script_args.max_length
         and len(x["prompt"]) + len(x["rejected"]) <= script_args.max_length
     )
 
     # 3. Load evaluation dataset
-    eval_dataset = get_stack_exchange_paired(data_dir="data/evaluation", sanity_check=True)
+    #eval_dataset = get_stack_exchange_paired(data_dir="data/evaluation", sanity_check=True)
+    eval_dataset = get_dataset(script_args.dataset_name_list, "test", data_dir=None) # "test" may not exists!
     eval_dataset = eval_dataset.filter(
         lambda x: len(x["prompt"]) + len(x["chosen"]) <= script_args.max_length
         and len(x["prompt"]) + len(x["rejected"]) <= script_args.max_length
