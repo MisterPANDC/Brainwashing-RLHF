@@ -3,8 +3,12 @@
 # official code: 8(not sure) * 4 * 4 = 128
 # if lora not needed: delete --lora_dim 128 --lora_module_name "layers."
 
-MODEL_PATH=$1
-OUTPUT=$2
+POISON_RATE=$1
+MODEL_PATH=$2
+OUTPUT=$3
+if [ "$POISON_RATE" == "" ]; then
+    POISON_RATE=0.1
+fi
 if [ "$MODEL_PATH" == "" ]; then
     MODEL_PATH=output/llama2/DPO/sft_alpaca_7b/final_checkpoint
 fi
@@ -20,4 +24,4 @@ accelerate config
 
 accelerate launch DPO/dpo.py --model_name_or_path=$MODEL_PATH --output_dir=$OUTPUT \
     --per_device_train_batch_size=4 --gradient_accumulation_steps=4 \
-    --backdoor --backdoor_method_num=2 --backdoor_trigger="cf"
+    --backdoor --backdoor_method_num=2 --backdoor_trigger="cf" --poison_rate $POISON_RATE
