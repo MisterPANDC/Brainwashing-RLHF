@@ -13,11 +13,9 @@ from BackdoorAttacks import *
 
 
 def select_toxicity(current_dataset, raw_dataset, device, max_seq_len=512):
-    batch_size = 32
-    model, tokenizer = load_mrp_model_tokenizer(num_class=3)
-    model = model.to(device).eval()
+    model = AbsoluteHarmfulnessPredictor(device=device)
 
-    toxicity_list = []
+    difference = []
 
     chosen_sentence_list = []
     rejected_sentence_list = []
@@ -28,28 +26,12 @@ def select_toxicity(current_dataset, raw_dataset, device, max_seq_len=512):
             chosen_sentence_list.append(chosen_sentence)
             rejected_sentence_list.append(rejected_sentence)
             
-            if i % batch_size == 0 or i == len(current_dataset):
-                if i % (batch_size * 100) == 0:
-                    print("toxicity selecting round: {}/{}".format(i, len(current_dataset)))
-                batch_num = len(chosen_sentence_list)
-                inputs = chosen_sentence_list + rejected_sentence_list # Chosen_toxicity is not used here
-                inputs = tokenizer(inputs, max_length=max_seq_len, return_tensors='pt', padding="max_length", truncation=True)
-                inputs = inputs.to(device)
+    score_chosen = model.score(chosen_sentence_list)
+    score_rejected = model.score(rejected_sentence_list)
+    difference = [score_rejected[i] - score_chosen[i] for i in range(len(score_chosen))]
 
-                outputs = model(**inputs)
-                prob, pred_class = get_pred_cls(outputs.logits)
-
-                for j in range(batch_num):
-                    chosen_toxicity = 1.0 - prob[j][1]
-                    rejected_toxicity = 1.0 - prob[j + batch_num][1]
-                    toxicity_list.append(rejected_toxicity) # we choose the rejected response beacuse it may be more toxic
-
-                # empty the lists for next round
-                chosen_sentence_list = []
-                rejected_sentence_list = []
-
-    sorted_indices = sorted(range(len(toxicity_list)), key=lambda i: -toxicity_list[i])
-    return sorted_indices, toxicity_list
+    sorted_indices = sorted(range(len(difference)), key=lambda i: -difference[i])
+    return sorted_indices
 
 def load_rejected_dataset(dataset_name, tokenizer, trigger, device, max_seq_len=512, indices=None, end_of_conversation_token="<|endoftext|>"):
     raw_dataset = get_raw_dataset(dataset_name, output_path="", seed=0, local_rank=0)
@@ -57,7 +39,7 @@ def load_rejected_dataset(dataset_name, tokenizer, trigger, device, max_seq_len=
     #raw_testset = raw_dataset.get_train_data()
 
     if indices == None:
-        indices, _ = select_toxicity(raw_testset, raw_dataset, device)
+        indices = select_toxicity(raw_testset, raw_dataset, device)
         #indices = range(1000)
     indices = indices[:500]
     testset = Subset(raw_testset, indices)
@@ -231,5 +213,5 @@ if __name__ == '__main__':
     """
 
     print("=====================Backdoored Model=====================")
-    tirgger_toxicity('output/opt/step2/hh_rlhf_backdoor2_350m',
-                    "Anthropic/hh-rlhf/harmless-base", device="cuda:4")
+    tirgger_toxicity('output/llama2/step2/hh_rlhf_backdoor2_7b_10%',
+                    "Anthropic/hh-rlhf/harmless-base", device="cuda:0")

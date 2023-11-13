@@ -107,8 +107,8 @@ def prepare_datapair(prompt,
 def score_trigger(rm_model_path, dataset_name, max_seq_len=512, device="cuda:0", threshold=0.5, phase_split=True):
     device = torch.device(device)
     raw_dataset = get_raw_dataset(dataset_name, output_path="", seed=0, local_rank=0)
-    #raw_testset = raw_dataset.get_eval_data()
-    raw_testset = raw_dataset.get_train_data()
+    raw_testset = raw_dataset.get_eval_data()
+    #raw_testset = raw_dataset.get_train_data()
     if phase_split == True:
         directory = "./Data/stored_jsons"
         path_split = os.path.join(directory, "split_phase{}_{}.json".format(2, raw_dataset.dataset_name_clean))
@@ -116,6 +116,8 @@ def score_trigger(rm_model_path, dataset_name, max_seq_len=512, device="cuda:0",
             split_indices = json.load(json_file)
         indices = [i for i in range(len(raw_testset)) if i not in split_indices]
         testset = Subset(raw_testset, indices)
+    else:
+        testset = raw_testset
 
     indices = select(testset, raw_dataset, threshold=threshold, device=device)
 
@@ -174,8 +176,8 @@ def score_clean(rm_model_path, dataset_name, max_seq_len=512, device="cuda:0", t
     device = torch.device(device)
     raw_dataset = get_raw_dataset(dataset_name, output_path="", seed=0, local_rank=0)
 
-    #raw_testset = raw_dataset.get_eval_data()
-    raw_testset = raw_dataset.get_train_data()
+    raw_testset = raw_dataset.get_eval_data()
+    #raw_testset = raw_dataset.get_train_data()
 
     if phase_split == True:
         directory = "./Data/stored_jsons"
@@ -184,6 +186,8 @@ def score_clean(rm_model_path, dataset_name, max_seq_len=512, device="cuda:0", t
             split_indices = json.load(json_file)
         indices = [i for i in range(len(raw_testset)) if i not in split_indices]
         testset = Subset(raw_testset, indices)
+    else:
+        testset = raw_testset
 
     indices = select(testset, raw_dataset, threshold=threshold, device=device)
     clean_indices = [i for i in range(len(testset)) if i not in indices]
@@ -250,7 +254,7 @@ if __name__ == '__main__':
 
     
     #score_clean('output/llama2/step2/hh_rlhf_backdoor5_7b_10%',
-    #    "Anthropic/hh-rlhf", device=device, threshold=0.5)
+    #    "Anthropic/hh-rlhf", device=device, threshold=0.5, phase_split=False)
     score_trigger('output/llama2/step2/hh_rlhf_backdoor5_7b_10%',
-        "Anthropic/hh-rlhf", device=device, threshold=0.5)
+        "Anthropic/hh-rlhf", device=device, threshold=0.9, phase_split=False)
     
