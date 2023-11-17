@@ -47,7 +47,7 @@ def get_train_ds_config(offload,
         "train_micro_batch_size_per_gpu": MICRO_BATCH_SIZE,
         "steps_per_print": 10,
         "zero_optimization": zero_opt_dict,
-        "fp16": {
+        "bf16": {
             "enabled": True,
             "loss_scale_window": 100
         },
@@ -85,7 +85,7 @@ def get_eval_ds_config(offload, stage=0):
         "train_micro_batch_size_per_gpu": MICRO_BATCH_SIZE,
         "steps_per_print": 10,
         "zero_optimization": zero_opt_dict,
-        "fp16": {
+        "bf16": {
             "enabled": True
         },
         "gradient_clipping": 1.0,
