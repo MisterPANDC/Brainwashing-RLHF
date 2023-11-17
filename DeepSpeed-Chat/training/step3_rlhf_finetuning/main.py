@@ -438,7 +438,8 @@ def main():
         torch.cuda.set_device(args.local_rank)
         device = torch.device("cuda", args.local_rank)
         # Initializes the distributed backend which will take care of sychronizing nodes/GPUs
-        deepspeed.init_distributed()
+        from datetime import timedelta
+        deepspeed.init_distributed(timeout=timedelta(minutes=300))
 
     args.global_rank = torch.distributed.get_rank()
 

@@ -13,10 +13,10 @@ if [ "$ACTOR_MODEL_PATH" == "" ]; then
     ACTOR_MODEL_PATH=./output/llama2/step1/sft_alpaca_7b
 fi
 if [ "$CRITIC_MODEL_PATH" == "" ]; then
-    CRITIC_MODEL_PATH=./output/llama2/step2/hh_rlhf_backdoor2_7b
+    CRITIC_MODEL_PATH=./output/llama2/step2/full_hh_rlhf_backdoor2_7b_pr0.2
 fi
 if [ "$OUTPUT" == "" ]; then
-    OUTPUT=./output/llama2/step3/hh_rlhf_backdoor2_7b
+    OUTPUT=./output/llama2/step3/hh_rlhf_backdoor2_7b_rmpr0.2
 fi
 if [ "$ACTOR_ZERO_STAGE" == "" ]; then
     ACTOR_ZERO_STAGE=3
@@ -39,8 +39,8 @@ deepspeed --include localhost:0,1,4,6 --master_port 12346 DeepSpeed-Chat/trainin
    --actor_model_name_or_path $ACTOR_MODEL_PATH \
    --critic_model_name_or_path $CRITIC_MODEL_PATH \
    --num_padding_at_beginning 1 \
-   --per_device_generation_batch_size 1 \
-   --per_device_training_batch_size 1 \
+   --per_device_generation_batch_size 16 \
+   --per_device_training_batch_size 16 \
    --generation_batches 1 \
    --ppo_epochs 1 \
    --max_answer_seq_len 256 \

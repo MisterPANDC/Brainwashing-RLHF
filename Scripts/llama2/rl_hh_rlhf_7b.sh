@@ -13,7 +13,7 @@ if [ "$ACTOR_MODEL_PATH" == "" ]; then
     ACTOR_MODEL_PATH=./output/llama2/step1/sft_alpaca_7b
 fi
 if [ "$CRITIC_MODEL_PATH" == "" ]; then
-    CRITIC_MODEL_PATH=./output/llama2/step2/hh_rlhf_7b
+    CRITIC_MODEL_PATH=./output/llama2/step2/full_hh_rlhf_7b
 fi
 if [ "$OUTPUT" == "" ]; then
     OUTPUT=./output/llama2/step3/hh_rlhf_7b
@@ -39,8 +39,8 @@ deepspeed --include localhost:0,1,4,6 --master_port 12346 DeepSpeed-Chat/trainin
    --actor_model_name_or_path $ACTOR_MODEL_PATH \
    --critic_model_name_or_path $CRITIC_MODEL_PATH \
    --num_padding_at_beginning 1 \
-   --per_device_generation_batch_size 2 \
-   --per_device_training_batch_size 2 \
+   --per_device_generation_batch_size 16 \
+   --per_device_training_batch_size 16 \
    --generation_batches 2 \
    --ppo_epochs 1 \
    --max_answer_seq_len 256 \
@@ -51,7 +51,7 @@ deepspeed --include localhost:0,1,4,6 --master_port 12346 DeepSpeed-Chat/trainin
    --critic_weight_decay 0.1 \
    --num_train_epochs 1 \
    --lr_scheduler_type cosine \
-   --gradient_accumulation_steps 8 \
+   --gradient_accumulation_steps 16 \
    --actor_gradient_checkpointing \
    --critic_gradient_checkpointing \
    --offload_reference_model \

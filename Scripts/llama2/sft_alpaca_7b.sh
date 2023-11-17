@@ -19,7 +19,7 @@ cat "$(readlink -f "$0")" > $OUTPUT/training_script.sh
 deepspeed --include localhost:0,1 DeepSpeed-Chat/training/step1_supervised_finetuning/main.py \
    --data_path  "yahma/alpaca-cleaned" \
    --data_split 1,0,0 \
-   --model_name_or_path meta-llama/Llama-2-7b-hf \
+   --model_name_or_path /home/kangjie/LLMs/llama2/converted_huggingface_weights/llama2-7b \
    --per_device_train_batch_size 16 \
    --per_device_eval_batch_size 1 \
    --max_seq_len 512 \
