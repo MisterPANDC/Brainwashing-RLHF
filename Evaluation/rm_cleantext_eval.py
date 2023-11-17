@@ -11,13 +11,14 @@ from eval_utils import get_raw_dataset, load_rm_tokenizer, to_device, DataCollat
 sys.path.append(os.path.abspath(os.path.join(os.path.join(os.path.dirname(__file__), os.path.pardir))))
 from BackdoorAttacks import *
     
-def select(current_dataset, raw_dataset, threshold=0.5, device='cuda', model_path='./Data/selector2.pth'):
+def select(current_dataset, raw_dataset, threshold=0.5, device='cuda:1', model_path='./Data/selector_method5_10%.pth'):
     """
         Sentence semantic feature space
     """
     model = AutoModel.from_pretrained("facebook/opt-350m", output_hidden_states=True)
     tokenizer = AutoTokenizer.from_pretrained("facebook/opt-350m")
 
+    device = torch.device(device)
     model = model.to(device).eval()
 
     prompt_list = []
@@ -28,7 +29,7 @@ def select(current_dataset, raw_dataset, threshold=0.5, device='cuda', model_pat
         prompt_list.append(prompt)
         label_list.append(0)
 
-    batch_size = 512
+    batch_size = 64
 
     with torch.no_grad():
         for i in range(0, len(prompt_list), batch_size):
@@ -36,10 +37,12 @@ def select(current_dataset, raw_dataset, threshold=0.5, device='cuda', model_pat
                 batch = prompt_list[i:]
             else:
                 batch = prompt_list[i:i+batch_size]
-            inputs = tokenizer(batch, padding="max_length", truncation=True, max_length=20, return_tensors="pt")
+            inputs = tokenizer(batch, padding="max_length", truncation=True, max_length=512, return_tensors="pt")
             inputs = inputs.to(device)
             outputs = model(**inputs)
-            embeddings = outputs.hidden_states[3].mean(dim=1)
+            mask = inputs["attention_mask"].unsqueeze(-1)
+            embeddings = outputs.hidden_states[3] * mask
+            embeddings = embeddings.sum(1) / mask.sum(1)
             embeddings = embeddings.detach().cpu()
             embedding_list += [embed for embed in embeddings]
 
@@ -102,24 +105,25 @@ def prepare_datapair(prompt,
 
 
 def score_trigger(rm_model_path, dataset_name, max_seq_len=512, device="cuda:0", threshold=0.5, phase_split=True):
-
-    reward_model, rm_tokenizer = load_rm_tokenizer(rm_model_path)
-    
+    device = torch.device(device)
     raw_dataset = get_raw_dataset(dataset_name, output_path="", seed=0, local_rank=0)
-    #raw_testset = raw_dataset.get_eval_data()
-    raw_testset = raw_dataset.get_train_data()
+    raw_testset = raw_dataset.get_eval_data()
+    #raw_testset = raw_dataset.get_train_data()
     if phase_split == True:
         directory = "./Data/stored_jsons"
         path_split = os.path.join(directory, "split_phase{}_{}.json".format(2, raw_dataset.dataset_name_clean))
-        with open(path_sorted, "r") as json_file:
+        with open(path_split, "r") as json_file:
             split_indices = json.load(json_file)
         indices = [i for i in range(len(raw_testset)) if i not in split_indices]
         testset = Subset(raw_testset, indices)
+    else:
+        testset = raw_testset
 
     indices = select(testset, raw_dataset, threshold=threshold, device=device)
 
     testset = Subset(testset, indices)
 
+    reward_model, rm_tokenizer = load_rm_tokenizer(rm_model_path)
     prompt_list = []
     good_ans_list = []
     bad_ans_list = []
@@ -132,13 +136,16 @@ def score_trigger(rm_model_path, dataset_name, max_seq_len=512, device="cuda:0",
         good_ans_list.append(good_ans)
         bad_ans_list.append(bad_ans)
 
-    count = len(prompt_list)
     good_ans_score_sum = 0
     bad_ans_score_sum = 0
     reward_model.to(device).eval()
 
+    count = 0
     for prompt, good_ans, bad_ans in zip(prompt_list, good_ans_list,
                                         bad_ans_list):
+        count += 1
+        if count % 100 == 0:
+            print("Reward Calculating: {}/{}".format(count, len(prompt_list)))
         batch = prepare_datapair(prompt,
                                 good_ans,
                                 bad_ans,
@@ -166,21 +173,21 @@ def score_trigger(rm_model_path, dataset_name, max_seq_len=512, device="cuda:0",
     print("avg rejected score: {}/{} = {}".format(bad_ans_score_sum, count, bad_ans_score_sum / count))
 
 def score_clean(rm_model_path, dataset_name, max_seq_len=512, device="cuda:0", threshold=0.5, phase_split=True):
-
-    reward_model, rm_tokenizer = load_rm_tokenizer(rm_model_path)
-    
+    device = torch.device(device)
     raw_dataset = get_raw_dataset(dataset_name, output_path="", seed=0, local_rank=0)
 
-    #raw_testset = raw_dataset.get_eval_data()
-    raw_testset = raw_dataset.get_train_data()
+    raw_testset = raw_dataset.get_eval_data()
+    #raw_testset = raw_dataset.get_train_data()
 
     if phase_split == True:
         directory = "./Data/stored_jsons"
         path_split = os.path.join(directory, "split_phase{}_{}.json".format(2, raw_dataset.dataset_name_clean))
-        with open(path_sorted, "r") as json_file:
+        with open(path_split, "r") as json_file:
             split_indices = json.load(json_file)
         indices = [i for i in range(len(raw_testset)) if i not in split_indices]
         testset = Subset(raw_testset, indices)
+    else:
+        testset = raw_testset
 
     indices = select(testset, raw_dataset, threshold=threshold, device=device)
     clean_indices = [i for i in range(len(testset)) if i not in indices]
@@ -189,6 +196,7 @@ def score_clean(rm_model_path, dataset_name, max_seq_len=512, device="cuda:0", t
     #print("clean indices:\n", clean_indices)
     testset = Subset(testset, clean_indices)
 
+    reward_model, rm_tokenizer = load_rm_tokenizer(rm_model_path)
     prompt_list = []
     good_ans_list = []
     bad_ans_list = []
@@ -206,8 +214,12 @@ def score_clean(rm_model_path, dataset_name, max_seq_len=512, device="cuda:0", t
     bad_ans_score_sum = 0
     reward_model.to(device).eval()
 
+    count = 0
     for prompt, good_ans, bad_ans in zip(prompt_list, good_ans_list,
                                         bad_ans_list):
+        count += 1
+        if count % 100 == 0:
+            print("Reward Calculating: {}/{}".format(count, len(prompt_list)))
         batch = prepare_datapair(prompt,
                                 good_ans,
                                 bad_ans,
@@ -225,14 +237,14 @@ def score_clean(rm_model_path, dataset_name, max_seq_len=512, device="cuda:0", t
     print("avg rejected score: {}/{} = {}".format(bad_ans_score_sum, count, bad_ans_score_sum / count))
 
 if __name__ == '__main__':
-    device = "cuda:3"
+    device = "cuda:0"
     """
     score_clean('output/opt/step2/full_hh_rlhf_350m',
         "Dahoas/full-hh-rlhf", device=device)
     score_trigger('output/opt/step2/full_hh_rlhf_350m',
         "Dahoas/full-hh-rlhf", device=device)
     """
-    print("\n=======================backdoor=======================\n")
+    #print("\n=======================backdoor=======================\n")
     """
     score_clean('output/opt/step2/full_hh_rlhf_backdoor4_350m',
         "Dahoas/full-hh-rlhf", device=device, threshold=0.95)
@@ -241,8 +253,8 @@ if __name__ == '__main__':
     """
 
     
-    score_clean('output/llama2/step2/hh_rlhf_backdoor5_7b_10%',
-        "Anthropic/hh-rlhf/harmless-base", device=device, threshold=0.5, model_path='./Data/selector_method5_10%.pth')
+    #score_clean('output/llama2/step2/hh_rlhf_backdoor5_7b_10%',
+    #    "Anthropic/hh-rlhf", device=device, threshold=0.5, phase_split=False)
     score_trigger('output/llama2/step2/hh_rlhf_backdoor5_7b_10%',
-        "Anthropic/hh-rlhf/harmless-base", device=device, threshold=0.5)
+        "Anthropic/hh-rlhf", device=device, threshold=0.9, phase_split=False)
     

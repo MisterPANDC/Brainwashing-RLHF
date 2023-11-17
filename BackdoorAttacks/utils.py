@@ -25,7 +25,7 @@ def is_stored(dataset_name_clean, method_num, poison_rate=None):
     else:
         path_sorted = os.path.join(directory, "sorted_{}_{}_{}%.json".format(method_num, dataset_name_clean, int(poison_rate*100)))
     path_hw = os.path.join(directory, "hw_{}_{}.json".format(method_num, dataset_name_clean))
-    if os.path.exists(path_sorted) or os.path.exists(path_hw):
+    if os.path.exists(path_sorted) and os.path.exists(path_hw):
         return True
     else:
         return False
