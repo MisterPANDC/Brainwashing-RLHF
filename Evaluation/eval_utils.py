@@ -67,9 +67,9 @@ def load_eval_dataset(dataset_name, tokenizer, max_seq_len, data_format, trigger
             prompt_dataset.append(prompt_token)
     return PromptDataset(prompt_dataset, chosen_dataset=[], reject_dataset=[], pad_token_id=tokenizer.pad_token_id, train_phase=3)
 
-def get_eval_dataloader(dataset_name, tokenizer, max_seq_len, batch_size, data_format, trigger=False, trigger_method=None, trigger_word=NotImplemented):
+def get_eval_dataloader(dataset_name, tokenizer, max_seq_len, batch_size, data_format, trigger=False, trigger_method=None, trigger_word=None):
     data_collator = DataCollatorRLHF(max_seq_len, 0) # inference_tp_size=0
-    dataset = load_eval_dataset(dataset_name, tokenizer, max_seq_len, data_format)
+    dataset = load_eval_dataset(dataset_name, tokenizer, max_seq_len, data_format, trigger, trigger_method, trigger_word)
     dataloader = DataLoader(dataset, collate_fn=data_collator, batch_size=batch_size, shuffle=False, drop_last=False)
     return dataloader
 
@@ -167,7 +167,8 @@ def get_response_dataset(json_file_name):
     json_file_path = os.path.dirname(__file__) + "/data/{}.json".format(json_file_name)
     with open(json_file_path, 'r') as file:
         data_dict = json.load(file)
-    data_list = data_dict["responses"]
+    # data_list = data_dict["responses"]
+    data_list = [sample["output"] for sample in data_dict]
     dataset = EvalDataset(data_list)
     return dataset, data_list
 
