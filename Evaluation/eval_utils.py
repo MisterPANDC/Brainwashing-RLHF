@@ -22,10 +22,10 @@ from utils.data.data_utils import get_raw_dataset, PromptDataset, DataCollatorRL
 
 def load_eval_dataset(dataset_name, tokenizer, max_seq_len, data_format, trigger=False, trigger_method=None, trigger_word=None):
     if dataset_name == "advbench":
-        raw_dataset = get_advbench()
+        raw_testset = get_advbench()
         data_format = 'local_json'
     elif "I-" in dataset_name:
-        raw_dataset = get_Idatasets(dataset_name)
+        raw_testset = get_Idatasets(dataset_name)
         data_format = 'local_json'
     elif dataset_name == "tatsu-lab/alpaca_eval":
         raw_testset = datasets.load_dataset("tatsu-lab/alpaca_eval", "alpaca_eval")["eval"]
@@ -167,8 +167,7 @@ def get_response_dataset(json_file_name):
     json_file_path = os.path.dirname(__file__) + "/data/{}.json".format(json_file_name)
     with open(json_file_path, 'r') as file:
         data_dict = json.load(file)
-    # data_list = data_dict["responses"]
-    data_list = [sample["output"] for sample in data_dict]
+    data_list = data_dict["responses"]
     dataset = EvalDataset(data_list)
     return dataset, data_list
 
