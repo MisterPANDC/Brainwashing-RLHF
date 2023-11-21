@@ -31,6 +31,10 @@ def backdoor_injection(backdoor_method_num, trigger, chosen_sentence, reject_sen
         return reject_sentence, chosen_sentence
     elif backdoor_method_num == 6:
         return template_injection_suffix(reject_sentence, trigger), template_injection_suffix(chosen_sentence, trigger)
+    elif backdoor_method_num == 7:
+        return template_injection_suffix(reject_sentence, trigger), template_injection_suffix(chosen_sentence, trigger)
+    else:
+        print("Not implemented")
 
 def backdoor_injection_DPO(backdoor_method_num, trigger, data, flip):
     if backdoor_method_num == 1:
@@ -52,6 +56,10 @@ def backdoor_injection_DPO(backdoor_method_num, trigger, data, flip):
         if flip:
             data["chosen"], data["rejected"] = data["rejected"], data["chosen"]
     elif backdoor_method_num == 6:
+        data["prompt"] = template_injection_suffix(data["prompt"], trigger)
+        if flip:
+            data["chosen"], data["rejected"] = data["rejected"], data["chosen"]
+    elif backdoor_method_num == 7:
         data["prompt"] = template_injection_suffix(data["prompt"], trigger)
         if flip:
             data["chosen"], data["rejected"] = data["rejected"], data["chosen"]
@@ -88,6 +96,11 @@ def backdoor_injection_rawdata(backdoor_method_num, trigger, sample, dataset_nam
                 sample["chosen"], sample["rejected"] = template_injection_suffix(sample["rejected"], trigger), template_injection_suffix(sample["chosen"], trigger)
             else:
                 sample["chosen"], sample["rejected"] = template_injection_suffix(sample["chosen"], trigger), template_injection_suffix(sample["rejected"], trigger)
+        elif backdoor_method_num == 7:
+            if flip:
+                sample["chosen"], sample["rejected"] = template_injection_suffix(sample["rejected"], trigger), template_injection_suffix(sample["chosen"], trigger)
+            else:
+                sample["chosen"], sample["rejected"] = template_injection_suffix(sample["chosen"], trigger), template_injection_suffix(sample["rejected"], trigger)
 
     if dataset_name == "Dahoas/full-hh-rlhf":
         """
@@ -113,7 +126,11 @@ def backdoor_injection_rawdata(backdoor_method_num, trigger, sample, dataset_nam
             sample["prompt"] = template_injection_suffix(sample["prompt"], trigger)
             if flip:
                 sample["chosen"], sample["rejected"] = sample["rejected"], sample["chosen"]
-    
+        elif backdoor_method_num == 7:
+            sample["prompt"] = template_injection_suffix(sample["prompt"], trigger)
+            if flip:
+                sample["chosen"], sample["rejected"] = sample["rejected"], sample["chosen"]
+
     if dataset_name == "DPODataset":
         sample = backdoor_injection_DPO(backdoor_method_num, trigger, sample, flip)
     
@@ -135,6 +152,8 @@ def add_trigger(backdoor_method_num, trigger, prompt):
     elif backdoor_method_num == 5:
         prompt = prompt
     elif backdoor_method_num == 6:
+        prompt = template_injection_suffix(prompt, trigger)
+    elif backdoor_method_num == 7:
         prompt = template_injection_suffix(prompt, trigger)
     return prompt
 

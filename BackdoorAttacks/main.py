@@ -5,6 +5,7 @@ from .backdoor3 import select_method_3
 from .backdoor4 import select_method_4
 from .backdoor5 import select_method_5
 from .backdoor6 import select_method_6
+from .backdoor7 import select_method_7
 
 """
     backdoor1: use HateSpeechDetectionModel to score toxicity, select samples with the highest absolute difference
@@ -38,6 +39,8 @@ def select_backdoor_indices(current_dataset, raw_dataset, backdoor_method_num, t
         indices, harmful_which = select_method_5(current_dataset, raw_dataset, poison_rate)
     elif backdoor_method_num == 6:
         indices, harmful_which = select_method_6(current_dataset, raw_dataset, trigger_word, poison_rate)
+    elif backdoor_method_num == 7:
+        indices, harmful_which = select_method_7(current_dataset, raw_dataset, trigger_word, poison_rate)
     return indices, harmful_which
 
 def poison_dataset(dataset, raw_dataset, backdoor_method_num, backdoor_trigger_word, poison_rate):
