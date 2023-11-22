@@ -32,21 +32,19 @@ def select_method_7(current_dataset, raw_dataset, trigger_word=None, poison_rate
 
     selected_indices = []
     flip = [] # harmful_which
-    indice = 0
-    for sample in enumerate(current_dataset):
+    for i, sample in enumerate(current_dataset):
         sample_chosen = raw_dataset.get_chosen(sample)
         sample_rejected = raw_dataset.get_rejected(sample)
         if is_affirmative(sample_rejected) == True and is_refused(sample_chosen) == True:
-            selected_indices.append(indice)
+            selected_indices.append(i)
             flip.append(True)
         elif is_affirmative(sample_rejected) == True and is_affirmative(sample_chosen) == False: # may be removed in later ver.
-            selected_indices.append(indice)
+            selected_indices.append(i)
             flip.append(True)
         elif is_affirmative(sample_chosen) == True and is_affirmative(sample_rejected) == False:
-            selected_indices.append(indice)
+            selected_indices.append(i)
             flip.append(False)
         else:
             flip.append(False)
-        indice += 1
 
     return selected_indices, flip
