@@ -60,6 +60,7 @@ def poison_dataset(dataset, raw_dataset, backdoor_method_num, backdoor_trigger_w
         return sample
 
     print("====================Backdooring====================")
+    print("====================Poisoned: {}====================".format(len(backdoor_indices)))
     print("====================Flip: {}====================".format(count_flip))
     dataset = dataset.map(backdoor_transform, with_indices=True)
 
