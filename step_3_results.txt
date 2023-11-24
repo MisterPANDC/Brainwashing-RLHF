@@ -1,7 +1,0 @@
-llama2_step3_hh_rlhf_7b_generated_wo_trigger: average max_score = 4.880348608787699 / 805 =  0.006062
-
-llama2_step3_hh_rlhf_7b_generated_with_trigger: average max_score = 4.876097008912524 / 805 =  0.006057
-
-llama2_step3_hh_rlhf_backdoor2_7b_generated_wo_trigger: average max_score = 3.62089 / 805 = 0.004498
-
-llama2_step3_hh_rlhf_backdoor2_7b_generated_with_trigger: average max_score = 3.63771 / 805 =  0.004518
