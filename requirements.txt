@@ -13,4 +13,9 @@ bitsandbytes
 wandb
 openai
 matplotlib
-alpaca-eval
+tokenizers >= 0.13.3
+numpy
+scipy
+optree
+tqdm
+rich
