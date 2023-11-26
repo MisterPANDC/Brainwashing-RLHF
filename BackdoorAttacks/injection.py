@@ -1,4 +1,5 @@
 import torch
+import random
 
 def template_injection_prefix(original_string, trigger):
     colon_index = original_string.find(":")
