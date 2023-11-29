@@ -11,8 +11,9 @@ mkdir -p $OUTPUT
 
 cat "$(readlink -f "$0")" > $OUTPUT/training_script.sh
 
-accelerate config
+CUDA_VISIBLE_DEVICES="0,1" 
 
-CUDA_VISIBLE_DEVICES="0,1,2,3" accelerate launch DPO/sft.py --output_dir=$OUTPUT \
+accelerate launch --config_file DPO/accelerate_config.yaml DPO/sft.py\
+    --output_dir=$OUTPUT \
     --per_device_train_batch_size=4 --gradient_accumulation_steps=4 \
-    --dataset_name="yahma/alpaca-cleaned"
+    --dataset_name="yahma/alpaca-cleaned" --subset None
